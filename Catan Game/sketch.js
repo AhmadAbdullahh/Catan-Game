@@ -31,8 +31,10 @@ function preload() {
 function setup() {
   createCanvas(800, 800);
   background(230,190,100);
-  drawHexGrid(19,75);
-  
+  drawHexGrid(75);
+  //allSet(75)
+
+
 
 
 
@@ -41,34 +43,23 @@ function setup() {
 }
 function draw()
 {
-  if(mouseIsPressed && mouseX >= 653 && mouseY >= 602 && mouseX <=750 && mouseY <= 643)
+  if(mouseIsPressed && mouseX >= 600 && mouseY >= 530 && mouseX <=700 && mouseY <= 580)
   {
    diceRolled();
-    fill(255);
-    rect(5,2,40,30,2)
-    textSize(20);
-    fill(0);
-    noStroke();
-    text("pressed",10,15);
+   
   }
   
     fill(255);
-    rect(5,2,40,30,2)
+    rect(10,2,40,30,2)
     textSize(20);
     fill(0);
     noStroke();
     text(mouseX,10,15);
     text(mouseY,10,30);
 
-    fill(0);
-
-    rect(60,35,195,30,2)
-    fill(255)
-    text("mousePressed: " + mouseIsPressed, 60, 60);
-
   
 }
-function drawHexGrid(totalHexagons,size)
+function drawHexGrid(size)
 {
   const hexHeight = sqrt(3)*size;
   const hexWidth = 2 *size;
@@ -110,13 +101,7 @@ function drawHexGrid(totalHexagons,size)
   suffleArray(resources);
   suffleArray(numbers);
   const desertIndex =  resources.indexOf("desert");
-  //resources.splice(desertIndex, 0, "desert");  // Insert "desert" at random index
-  
-  // Ensure the numbers array has a `null` at the same index as "desert"
   numbers.splice(desertIndex, 0, null);
-
-  // Shuffle the remaining resources and numbers
-
   
   const resourceImages = {
     desert: dessertImage,
@@ -147,10 +132,11 @@ function drawHexGrid(totalHexagons,size)
     const imageToDraw = resourceImages[resource];
     const numberimageTD = numberImages[numb];
   
-    const x = centerX + (pos.q * hexWidth * 0.75);
-    const y = centerY + (pos.r * hexHeight);
+    const x = (centerX -50)+ (pos.q * hexWidth * 0.75);
+    const y = (centerY -50)+ (pos.r * hexHeight);
     
     drawHexagon(x, y, size); // Draw the hexagon
+    //allSet(x,y,75)
     if (imageToDraw) {
       image(imageToDraw, x - 137 / 2, y - 137 / 2, 137, 137); // Draw the resource image
       
@@ -169,12 +155,14 @@ function drawHexagon(x, y, size)
   stroke(0);
   strokeWeight(5);
 
+
   beginShape();
   for(let i = 0; i < 6; i++)
   {
     const angle = TWO_PI/6 * i;
     const xOffset = x + sin(angle)*size;
     const yOffset = y + cos(angle)*size;
+    //rect(xOffset,yOffset,10,10)
     vertex(xOffset,yOffset);
   }
   endShape(CLOSE);
@@ -190,6 +178,7 @@ function  suffleArray(array)
 }
 function drawDice(x, y, size, value) {
   // Draw the dice background
+  rectMode(CORNER); 
   fill(120,255,0); // White dice
   stroke(255,0,0); // Black border
   strokeWeight(2);
@@ -240,8 +229,106 @@ function diceRolled()
 {
   const dice1Value = int(random(1, 7)); // Random number between 1 and 6
   const dice2Value = int(random(1, 7)); // Random number between 1 and 6
-  drawDice(650, 600, 50, dice1Value);
-  drawDice(700, 600, 50, dice2Value);
+  drawDice(600, 530, 50, dice1Value);
+  drawDice(650, 530, 50, dice2Value);
+}
+function drawSettelment(Sx,Sy)
+{
+  fill(255,0,0)
+  stroke(255);
+  rectMode(CENTER);
+  triangle(Sx - 28, Sy - 18, Sx + 28, Sy - 18, Sx, Sy - 40);
+  rect(Sx, Sy, 30, 30);
+  stroke(0);
+  fill(0)
+  rect(Sx + 1, Sy + 5, 3, 12);
+}
+
+function allSet(x,y,size)
+{
+  
+  for(let i = 0; i < 6; i++)
+  {
+    const angle1 = TWO_PI/6 * i;
+    const xCorner = x + sin(angle1)*size;
+    const yCorner = y + cos(angle1)*size;
+   
+    drawSettelment(xCorner,yCorner);
+  }
+}
+function mousePressed() {
+  const hexSize = 75; // Same size used in `drawHexGrid`
+  const hexHeight = sqrt(3) * hexSize;
+  const hexWidth = 2 * hexSize;
+  const centerX = width / 2;
+  const centerY = height / 2;
+
+  // Positions array matches `drawHexGrid` positions
+  const positions = [
+    { q: 0, r: 0 },
+    { q: 0.60, r: -0.85 },
+    { q: 1.15, r: 0 },
+    { q: 0.60, r: 0.85 },
+    { q: -0.60, r: 0.85 },
+    { q: -1.15, r: 0 },
+    { q: -0.60, r: -0.85 },
+    { q: -1.20, r: -1.75 },
+    { q: 0, r: -1.75 },
+    { q: 1.20, r: -1.75 },
+    { q: 1.80, r: -0.85 },
+    { q: 2.35, r: 0 },
+    { q: 1.80, r: 0.85 },
+    { q: 1.20, r: 1.75 },
+    { q: 0, r: 1.75 },
+    { q: -1.2, r: 1.75 },
+    { q: -1.78, r: 0.87 },
+    { q: -2.35, r: 0 },
+    { q: -1.77, r: -0.87 }
+  ];
+
+  // Iterate through all hexagon positions
+  for (let i = 0; i < positions.length; i++) {
+    const pos = positions[i];
+    const x = (centerX - 50) + (pos.q * hexWidth * 0.75);
+    const y = (centerY - 50) + (pos.r * hexHeight);
+
+    if (isMouseNearHexEdge(x, y, hexSize)) {
+      allSet(x, y, hexSize); // Call allSet when near an edge
+      break; // Stop checking once a match is found
+    }
+  }
+}
+
+function isMouseNearHexEdge(hexX, hexY, size) {
+  const threshold = 10; // Allowable distance from edge
+  for (let i = 0; i < 6; i++) {
+    const angle1 = TWO_PI / 6 * i;
+    const angle2 = TWO_PI / 6 * (i + 1);
+
+    const x1 = hexX + sin(angle1) * size;
+    const y1 = hexY + cos(angle1) * size;
+
+    const x2 = hexX + sin(angle2) * size;
+    const y2 = hexY + cos(angle2) * size;
+
+    // Check if the mouse is close to the edge (line segment)
+    const d = distToSegment(mouseX, mouseY, x1, y1, x2, y2);
+    if (d < threshold) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Helper to calculate the distance from a point to a line segment
+function distToSegment(px, py, x1, y1, x2, y2) {
+  const l2 = (x2 - x1) ** 2 + (y2 - y1) ** 2; // Length squared of the segment
+  if (l2 == 0) return dist(px, py, x1, y1); // If the segment is a point
+  let t = ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / l2;
+  t = max(0, min(1, t)); // Clamp t to the segment
+  const projX = x1 + t * (x2 - x1);
+  const projY = y1 + t * (y2 - y1);
+  return dist(px, py, projX, projY);
 }
 
 
