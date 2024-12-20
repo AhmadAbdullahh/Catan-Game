@@ -6,6 +6,13 @@ let treeImage, dessertImage, brickImage, oreImage, wheatImage, sheepImage;
 let image2,image3,image4,image5,image6,image8,image9,image10,image11,image12;
 let woodCard,sheepCard,grainCard,oreCard,brickCard,developmentCard;
 
+let hexPosition = [];
+let hexResource = [];
+let hexNumber = [];
+
+let highlightStartTime = 0;
+let isHighlighting = false;
+
 
 function preload() {
 
@@ -45,23 +52,18 @@ function setup() {
   stroke(255)
   fill(10,100,155);
   rect(10,670,350,100);
- 
 
   const close = 20;
-  
   rect(390-close,690,70,70);
   rect(470-close,690,70,70);
   rect(550-close,690,70,70);
   rect(630-close,690,70,70);
   rect(710-close,690,70,70);
 
-
   drawSettelement(585-close,735,"Black");
   drawCity(665-close,735,"Black");
   drawRoad(490,730,"Black");
    
-
-
   stroke(0,0,155)
   fill(10,155,100);
   rect(690,20,100,420);
@@ -69,12 +71,10 @@ function setup() {
   fill(200,100,0);
   rect(690,460,100,100);
 
-
   const imageX = 710;
   const imageY = 25;
   const imageW = 55;
   const imageL = 80;
-
 
   image(woodCard,imageX,imageY,imageW,imageL);
   image(sheepCard,imageX,imageY+imageL+5,imageW,imageL);
@@ -82,12 +82,6 @@ function setup() {
   image(oreCard,imageX,imageY+3*imageL+10,imageW,imageL);
   image(brickCard,imageX,imageY+4*imageL+10,imageW,imageL);
   image(developmentCard,imageX,imageY+5*imageL+45,imageW,imageL);
-
-  
-
-
-
-
 }
 function draw()
 {
@@ -134,8 +128,6 @@ function drawHexGrid(size)
     { q: -1.78, r: 0.87},
     { q: -2.35, r: 0},
     { q:  -1.77, r: -0.87},
-
-    
   ];
   
   const resources = [
@@ -172,7 +164,6 @@ function drawHexGrid(size)
     12: image12
   };
 
-
   for (let i = 0; i < positions.length; i++) {
     const pos = positions[i];
     const resource = resources[i];
@@ -183,8 +174,12 @@ function drawHexGrid(size)
     const x = (centerX -50)+ (pos.q * hexWidth * 0.75);
     const y = (centerY -50)+ (pos.r * hexHeight);
     
-    drawHexagon(x, y, size); // Draw the hexagon
-    //allSet(x,y,75)
+    hexPosition.push({x, y});
+    hexResource.push(resource);
+    hexNumber.push(numb);
+    
+    drawHexagon(x, y, size); 
+
     if (imageToDraw) {
       image(imageToDraw, x - 137 / 2, y - 137 / 2, 137, 137); // Draw the resource image
       
@@ -279,6 +274,51 @@ function diceRolled()
   const dice2Value = int(random(1, 7)); // Random number between 1 and 6
   drawDice(600, 530, 50, dice1Value);
   drawDice(650, 530, 50, dice2Value);
+
+  const diceSum = dice1Value + dice1Value;
+
+  for(let i = 0; i < hexPosition.length; i++) {
+    if(hexNumber[i] == diceSum.toString()) {
+      const pos = hexPosition[i];
+      
+      // Start highlight for matching hexagons
+     // startHighlight(pos.x, pos.y, 75);
+    }
+  }
+      //console.log(`Resource ${resource} at number ${diceSum}`);
+      
+    
+  
+  
+}
+
+function mousePressed() {
+  const hexSize = 75; 
+  const hexHeight = sqrt(3) * hexSize;
+  const hexWidth = 2 * hexSize;
+  const centerX = width / 2;
+  const centerY = height / 2;
+
+  const positions = [
+    { q: 0, r: 0 },
+    { q: 0.6, r: -0.85 }, { q: 1.15, r: 0 }, { q: 0.6, r: 0.85 },
+    { q: -0.6, r: 0.85 }, { q: -1.15, r: 0 }, { q: -0.6, r: -0.85 },
+    { q: -1.2, r: -1.75 }, { q: 0, r: -1.75 }, { q: 1.2, r: -1.75 },
+    { q: 1.8, r: -0.85 }, { q: 2.35, r: 0 }, { q: 1.8, r: 0.85 },
+    { q: 1.2, r: 1.75 }, { q: 0, r: 1.75 }, { q: -1.2, r: 1.75 },
+    { q: -1.78, r: 0.87 }, { q: -2.35, r: 0 }, { q: -1.77, r: -0.87 }
+  ];
+
+  for (let pos of positions) {
+    const hexX = centerX - 50 + pos.q * hexWidth * 0.75;
+    const hexY = centerY - 50 + pos.r * hexHeight;
+    const closestEdge = getClosestHexEdge(hexX, hexY, hexSize);
+
+    if (dist(mouseX, mouseY, closestEdge.x, closestEdge.y) < 10) { 
+      drawSettelement(closestEdge.x, closestEdge.y,"Green"); 
+      break;
+    }
+  }
 }
 function drawSettelement(Sx,Sy,color)
 {
@@ -332,36 +372,6 @@ function drawSettelement(Sx,Sy,color)
 
   rect(Sx-2,Sy+10,5,10)
 
-}
-
-
-function mousePressed() {
-  const hexSize = 75; 
-  const hexHeight = sqrt(3) * hexSize;
-  const hexWidth = 2 * hexSize;
-  const centerX = width / 2;
-  const centerY = height / 2;
-
-  const positions = [
-    { q: 0, r: 0 },
-    { q: 0.6, r: -0.85 }, { q: 1.15, r: 0 }, { q: 0.6, r: 0.85 },
-    { q: -0.6, r: 0.85 }, { q: -1.15, r: 0 }, { q: -0.6, r: -0.85 },
-    { q: -1.2, r: -1.75 }, { q: 0, r: -1.75 }, { q: 1.2, r: -1.75 },
-    { q: 1.8, r: -0.85 }, { q: 2.35, r: 0 }, { q: 1.8, r: 0.85 },
-    { q: 1.2, r: 1.75 }, { q: 0, r: 1.75 }, { q: -1.2, r: 1.75 },
-    { q: -1.78, r: 0.87 }, { q: -2.35, r: 0 }, { q: -1.77, r: -0.87 }
-  ];
-
-  for (let pos of positions) {
-    const hexX = centerX - 50 + pos.q * hexWidth * 0.75;
-    const hexY = centerY - 50 + pos.r * hexHeight;
-    const closestEdge = getClosestHexEdge(hexX, hexY, hexSize);
-
-    if (dist(mouseX, mouseY, closestEdge.x, closestEdge.y) < 10) { 
-      drawSettelement(closestEdge.x, closestEdge.y,"Green"); 
-      break;
-    }
-  }
 }
 
 function getClosestHexEdge(x, y, size) {
@@ -512,3 +522,4 @@ function drawRoad(Sx,Sy,color)
   vertex(Sx, Sy-25);
   endShape();
 }
+
