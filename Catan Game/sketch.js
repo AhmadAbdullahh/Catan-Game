@@ -10,6 +10,13 @@ let hexPosition = [];
 let hexResource = [];
 let hexNumber = [];
 
+let totalGrainCollected = 0;
+let totalBrickCollected = [];
+let totalOreCollected = [];
+let totalWoodCollected = [];
+let totalSheepCollected = [];
+
+
 let highlightStartTime = 0;
 let isHighlighting = false;
 
@@ -43,7 +50,6 @@ function preload() {
 
 
 }
-
 function setup() {
   createCanvas(800, 800);
   background(230,190,100);
@@ -60,7 +66,7 @@ function setup() {
   rect(630-close,690,70,70);
   rect(710-close,690,70,70);
 
-  drawSettelement(585-close,735,"Black");
+  drawSettelement(585-close,735,"Blue");
   drawCity(665-close,735,"Black");
   drawRoad(490,730,"Black");
    
@@ -85,12 +91,6 @@ function setup() {
 }
 function draw()
 {
-  if(mouseIsPressed && mouseX >= 600 && mouseY >= 530 && mouseX <=700 && mouseY <= 580)
-  {
-   diceRolled();
-   
-  }
-  
     fill(255);
     rect(10,2,40,30,2)
     textSize(20);
@@ -191,7 +191,6 @@ function drawHexGrid(size)
   }
   
 }
-
 function drawHexagon(x, y, size)
 {
   fill(255); 
@@ -210,7 +209,6 @@ function drawHexagon(x, y, size)
   }
   endShape(CLOSE);
 }
-
 function  suffleArray(array)
 {
   for (let i = array.length-1; i > 0; i-- )
@@ -267,31 +265,31 @@ function drawDice(x, y, size, value) {
     ellipse(centerX + offset, centerY + offset, dotRadius);
   }
 }
-
 function diceRolled()
 {
   const dice1Value = int(random(1, 7)); // Random number between 1 and 6
   const dice2Value = int(random(1, 7)); // Random number between 1 and 6
+  console.log("dice1Value is ",dice1Value);
+  console.log("dice2Value is ",dice2Value);
   drawDice(600, 530, 50, dice1Value);
   drawDice(650, 530, 50, dice2Value);
 
-  const diceSum = dice1Value + dice1Value;
+  const diceSum = dice1Value + dice2Value;
 
-  for(let i = 0; i < hexPosition.length; i++) {
-    if(hexNumber[i] == diceSum.toString()) {
-      const pos = hexPosition[i];
-      
+  
+
+ for(let i = 0; i < hexPosition.length; i++) {
+    if(hexNumber[i] == diceSum) {
+      //const pos = hexPosition[i];
+      console.log("The sum of the dice is:", diceSum);
+      resourceTaken(hexResource[i]);
+      console.log("The i of the dice is:", i);
       // Start highlight for matching hexagons
-     // startHighlight(pos.x, pos.y, 75);
+      //startHighlight(pos.x, pos.y, 75);
     }
   }
       //console.log(`Resource ${resource} at number ${diceSum}`);
-      
-    
-  
-  
 }
-
 function mousePressed() {
   const hexSize = 75; 
   const hexHeight = sqrt(3) * hexSize;
@@ -319,7 +317,56 @@ function mousePressed() {
       break;
     }
   }
+  dicePressed();
 }
+
+function resourceTaken(resourceGiven){
+
+  const RGX = 20;
+  const RGY = 690;
+  const imageW = 55;
+  const imageL = 80;
+ if(resourceGiven == "sheep")
+ {
+  image(sheepCard,RGX,RGY,imageW,imageL);
+  resourceQuantity("sheep",RGX,RGY);
+ }
+ else if (resourceGiven == "wheat")
+ {
+  image(grainCard,RGX+imageW,RGY,imageW,imageL);
+  totalGrainCollected++;
+  resourceQuantity("wheat",RGX+imageW,RGY);
+ }
+ else if (resourceGiven == "brick")
+ {
+  image(brickCard,RGX+2*imageW,RGY,imageW,imageL);
+
+  resourceQuantity("brick",RGX+2*imageW,RGY);
+ }
+ else if (resourceGiven =="ore")
+ {
+  image(oreCard,RGX+3*imageW,RGY,imageW,imageL);
+  resourceQuantity("ore",RGX+3*imageW,RGY);
+ }
+ else if (resourceGiven =="lumber")
+ {
+  image(woodCard,RGX+4*imageW,RGY,imageW,imageL);
+  resourceQuantity("lumber",RGX+4*imageW,RGY);
+ }
+
+}
+function dicePressed(){
+  if(mouseIsPressed && mouseX >= 600 && mouseY >= 530 && mouseX <=700 && mouseY <= 580)
+  {
+   diceRolled();
+   
+  }
+}
+
+
+
+
+//drawing 
 function drawSettelement(Sx,Sy,color)
 {
   if(color == "Red")
@@ -373,7 +420,6 @@ function drawSettelement(Sx,Sy,color)
   rect(Sx-2,Sy+10,5,10)
 
 }
-
 function getClosestHexEdge(x, y, size) {
   let closest = { x: 0, y: 0 }, minDist = Infinity;
   for (let i = 0; i < 6; i++) {
@@ -388,7 +434,6 @@ function getClosestHexEdge(x, y, size) {
   }
   return closest;
 }
-
 function drawCity(Sx,Sy,color)
 {
   if(color == "Red")
@@ -523,3 +568,47 @@ function drawRoad(Sx,Sy,color)
   endShape();
 }
 
+function resourceQuantity(resourceName,RGX,RGY){
+  if(resourceName == "wheat"){
+
+  textSize(20);
+  fill(0);
+  noStroke();
+  text(totalGrainCollected,RGX,RGY+13);
+
+  }
+  if(resourceName == "brick"){  
+    textSize(20);
+    fill(0);
+    noStroke();
+    text(totalGrainCollected,RGX,RGY+13);
+    }
+ if(resourceName == "ore"){  
+textSize(20);
+fill(0);
+noStroke();
+text(totalGrainCollected,RGX,RGY+13);
+}
+if(resourceName == "lumber"){  
+  
+ // fill(255);
+  //rect(RGX+2,RGY-15,20,20)
+textSize(20);
+fill(0);
+noStroke();
+text(totalGrainCollected,RGX,RGY+13);
+ }
+ if(resourceName == "sheep"){  
+textSize(20);
+fill(0);
+noStroke();
+text(totalGrainCollected,RGX,RGY+13);
+ }
+
+}
+
+
+
+
+
+//image(developmentCard,imageX,imageY+5*imageL+45,imageW,imageL);
