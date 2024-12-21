@@ -11,10 +11,10 @@ let hexResource = [];
 let hexNumber = [];
 
 let totalGrainCollected = 0;
-let totalBrickCollected = [];
-let totalOreCollected = [];
-let totalWoodCollected = [];
-let totalSheepCollected = [];
+let totalBrickCollected = 0;
+let totalOreCollected = 0;
+let totalWoodCollected = 0;
+let totalSheepCollected = 0;
 
 
 let highlightStartTime = 0;
@@ -329,6 +329,7 @@ function resourceTaken(resourceGiven){
  if(resourceGiven == "sheep")
  {
   image(sheepCard,RGX,RGY,imageW,imageL);
+  totalSheepCollected++;
   resourceQuantity("sheep",RGX,RGY);
  }
  else if (resourceGiven == "wheat")
@@ -340,17 +341,19 @@ function resourceTaken(resourceGiven){
  else if (resourceGiven == "brick")
  {
   image(brickCard,RGX+2*imageW,RGY,imageW,imageL);
-
+  totalGrainCollected++;
   resourceQuantity("brick",RGX+2*imageW,RGY);
  }
  else if (resourceGiven =="ore")
  {
   image(oreCard,RGX+3*imageW,RGY,imageW,imageL);
+  totalOreCollected++;
   resourceQuantity("ore",RGX+3*imageW,RGY);
  }
  else if (resourceGiven =="lumber")
  {
   image(woodCard,RGX+4*imageW,RGY,imageW,imageL);
+  totalWoodCollected++;
   resourceQuantity("lumber",RGX+4*imageW,RGY);
  }
 
@@ -581,13 +584,13 @@ function resourceQuantity(resourceName,RGX,RGY){
     textSize(20);
     fill(0);
     noStroke();
-    text(totalGrainCollected,RGX,RGY+13);
+    text(totalBrickCollected,RGX,RGY+13);
     }
  if(resourceName == "ore"){  
 textSize(20);
 fill(0);
 noStroke();
-text(totalGrainCollected,RGX,RGY+13);
+text(totalOreCollected,RGX,RGY+13);
 }
 if(resourceName == "lumber"){  
   
@@ -596,13 +599,13 @@ if(resourceName == "lumber"){
 textSize(20);
 fill(0);
 noStroke();
-text(totalGrainCollected,RGX,RGY+13);
+text(totalWoodCollected,RGX,RGY+13);
  }
  if(resourceName == "sheep"){  
 textSize(20);
 fill(0);
 noStroke();
-text(totalGrainCollected,RGX,RGY+13);
+text(totalSheepCollected,RGX,RGY+13);
  }
 
 }
