@@ -17,8 +17,12 @@ let totalWoodCollected = 0;
 let totalSheepCollected = 0;
 
 
-let highlightStartTime = 0;
-let isHighlighting = false;
+let currentHighlightedHexes = [];
+
+let settlements = []; // Track all placed settlements
+let roads = []; // Track all placed roads
+let initialPlacement = true; // Flag for initial placement phase
+
 
 
 function preload() {
@@ -57,25 +61,25 @@ function setup() {
 
   stroke(255)
   fill(10,100,155);
-  rect(10,670,350,100);
+  rect(10,670,350,100,10);
 
   const close = 20;
-  rect(390-close,690,70,70);
-  rect(470-close,690,70,70);
-  rect(550-close,690,70,70);
-  rect(630-close,690,70,70);
-  rect(710-close,690,70,70);
+  rect(390-close,690,70,70,10);
+  rect(470-close,690,70,70,10);
+  rect(550-close,690,70,70,10);
+  rect(630-close,690,70,70,10);
+  rect(710-close,690,70,70,10);
 
-  drawSettelement(585-close,735,"Blue");
+  drawSettelement(585-close,735,"Black");
   drawCity(665-close,735,"Black");
   drawRoad(490,730,"Black");
    
   stroke(0,0,155)
   fill(10,155,100);
-  rect(690,20,100,420);
+  rect(690,20,100,420,10);
   stroke(0,155,155)
   fill(200,100,0);
-  rect(690,460,100,100);
+  rect(690,460,100,100,10);
 
   const imageX = 710;
   const imageY = 25;
@@ -97,9 +101,7 @@ function draw()
     fill(0);
     noStroke();
     text(mouseX,10,15);
-    text(mouseY,10,30);
-
-  
+    text(mouseY,10,30);  
 }
 function drawHexGrid(size)
 {
@@ -220,8 +222,8 @@ function  suffleArray(array)
 function drawDice(x, y, size, value) {
   // Draw the dice background
   rectMode(CORNER); 
-  fill(120,255,0); // White dice
-  stroke(255,0,0); // Black border
+  fill(120,255,0); 
+  stroke(255,0,0); 
   strokeWeight(2);
   rect(x, y, size, size, 10); // Rounded corners
 
@@ -276,19 +278,28 @@ function diceRolled()
 
   const diceSum = dice1Value + dice2Value;
 
-  
+  //currentHighlightedHexes = [];
+  for (let i = 0; i < currentHighlightedHexes.length; i++) {
+    // Use the x and y values from currentHighlightedHexes to call highLightHexagon
+    unhighLightHexagon(currentHighlightedHexes[i].x, currentHighlightedHexes[i].y, 75,0);
+}
+currentHighlightedHexes = [];
 
  for(let i = 0; i < hexPosition.length; i++) {
     if(hexNumber[i] == diceSum) {
-      //const pos = hexPosition[i];
       console.log("The sum of the dice is:", diceSum);
       resourceTaken(hexResource[i]);
       console.log("The i of the dice is:", i);
-      // Start highlight for matching hexagons
-      //startHighlight(pos.x, pos.y, 75);
+
+     //highLightHexagon(hexPosition[i].x, hexPosition[i].y, 75,10);
+      currentHighlightedHexes.push({ x: hexPosition[i].x, y: hexPosition[i].y });
+      for (let i = 0; i < currentHighlightedHexes.length; i++) {
+        // Use the x and y values from currentHighlightedHexes to call highLightHexagon
+        highLightHexagon(currentHighlightedHexes[i].x, currentHighlightedHexes[i].y, 75, 0);
+    }
+   
     }
   }
-      //console.log(`Resource ${resource} at number ${diceSum}`);
 }
 function mousePressed() {
   const hexSize = 75; 
@@ -312,12 +323,26 @@ function mousePressed() {
     const hexY = centerY - 50 + pos.r * hexHeight;
     const closestEdge = getClosestHexEdge(hexX, hexY, hexSize);
 
-    if (dist(mouseX, mouseY, closestEdge.x, closestEdge.y) < 10) { 
-      drawSettelement(closestEdge.x, closestEdge.y,"Green"); 
+    if (dist(mouseX, mouseY, closestEdge.x, closestEdge.y) < 10) {
+      // Check if placement is legal before drawing settlement
+      if (isLegalSettlementPlacement(closestEdge.x, closestEdge.y)) {
+        drawSettelement(closestEdge.x, closestEdge.y, "Green");
+        settlements.push({ x: closestEdge.x, y: closestEdge.y });
+        console.log("Settlement placed at", closestEdge.x, closestEdge.y);
+      } else {
+        console.log("Illegal settlement placement");
+        // Optional: Add visual feedback for illegal placement
+        fill(255, 0, 0, 100);
+        noStroke();
+        circle(closestEdge.x, closestEdge.y, 20);
+      }
       break;
     }
   }
+
+
   dicePressed();
+
 }
 
 function resourceTaken(resourceGiven){
@@ -341,7 +366,7 @@ function resourceTaken(resourceGiven){
  else if (resourceGiven == "brick")
  {
   image(brickCard,RGX+2*imageW,RGY,imageW,imageL);
-  totalGrainCollected++;
+  totalBrickCollected++;
   resourceQuantity("brick",RGX+2*imageW,RGY);
  }
  else if (resourceGiven =="ore")
@@ -362,7 +387,6 @@ function dicePressed(){
   if(mouseIsPressed && mouseX >= 600 && mouseY >= 530 && mouseX <=700 && mouseY <= 580)
   {
    diceRolled();
-   
   }
 }
 
@@ -612,6 +636,86 @@ text(totalSheepCollected,RGX,RGY+13);
 
 
 
+function highLightHexagon(x, y, size,opacity) {
+  fill(255, 255, 0, opacity);
+  stroke(255, 255, 0);
+  strokeWeight(10);
+  beginShape();
+  for(let i = 0; i < 6; i++) {
+  const angle = TWO_PI/6 * i;
+  const xOffset = x + sin(angle)*size;
+  const yOffset = y + cos(angle)*size;
+  vertex(xOffset, yOffset);
+  }
+  endShape(CLOSE);
+  } 
+
+function unhighLightHexagon(x, y, size,opacity) {
+  fill(255, 0, 0, opacity);
+  stroke(0, 0, 0);
+  strokeWeight(10);
+  beginShape();
+  for(let i = 0; i < 6; i++) {
+  const angle = TWO_PI/6 * i;
+  const xOffset = x + sin(angle)*size;
+  const yOffset = y + cos(angle)*size;
+  vertex(xOffset, yOffset);
+  }
+  endShape(CLOSE);
+  } 
+
+//G Code
 
 
-//image(developmentCard,imageX,imageY+5*imageL+45,imageW,imageL);
+function isLegalSettlementPlacement(x, y) {
+  // Check distance rule (no settlements within 2 road segments)
+  for (let settlement of settlements) {
+    const distance = dist(x, y, settlement.x, settlement.y);
+    if (distance < 75) { // Using hexSize as minimum distance
+      console.log("Too close to another settlement");
+      return false;
+    }
+  }
+
+  // During initial placement, no need to check for road connection
+  if (initialPlacement) {
+    return true;
+  }
+
+  // Check if connected to a road (except during initial placement)
+  let hasConnectedRoad = false;
+  for (let road of roads) {
+    const distToRoadStart = dist(x, y, road.start.x, road.start.y);
+    const distToRoadEnd = dist(x, y, road.end.x, road.end.y);
+    if (distToRoadStart < 10 || distToRoadEnd < 10) {
+      hasConnectedRoad = true;
+      break;
+    }
+  }
+
+  if (!hasConnectedRoad && !initialPlacement) {
+    console.log("Must be connected to a road");
+    return false;
+  }
+
+  return true;
+}
+
+// Add this function to handle road placement
+function addRoad(startX, startY, endX, endY) {
+  roads.push({
+    start: { x: startX, y: startY },
+    end: { x: endX, y: endY }
+  });
+}
+
+// Function to end initial placement phase
+function endInitialPlacement() {
+  initialPlacement = false;
+}
+
+
+
+
+
+
