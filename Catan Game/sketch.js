@@ -325,7 +325,8 @@ function mousePressed() {
 
     if (dist(mouseX, mouseY, closestEdge.x, closestEdge.y) < 10) {
       // Check if placement is legal before drawing settlement
-      if (isLegalSettlementPlacement(closestEdge.x, closestEdge.y)) {
+     if(settlements.length < 2){
+       if (isLegalSettlementPlacement(closestEdge.x, closestEdge.y)) {
         drawSettelement(closestEdge.x, closestEdge.y, "Green");
         settlements.push({ x: closestEdge.x, y: closestEdge.y });
         console.log("Settlement placed at", closestEdge.x, closestEdge.y);
@@ -337,6 +338,8 @@ function mousePressed() {
         circle(closestEdge.x, closestEdge.y, 20);
       }
       break;
+    }
+    console.log("Illegal" ,settlements.length," has settlement placement. Now place a roas");
     }
   }
 
@@ -634,8 +637,6 @@ text(totalSheepCollected,RGX,RGY+13);
 
 }
 
-
-
 function highLightHexagon(x, y, size,opacity) {
   fill(255, 255, 0, opacity);
   stroke(255, 255, 0);
@@ -671,7 +672,7 @@ function isLegalSettlementPlacement(x, y) {
   // Check distance rule (no settlements within 2 road segments)
   for (let settlement of settlements) {
     const distance = dist(x, y, settlement.x, settlement.y);
-    if (distance < 75) { // Using hexSize as minimum distance
+    if (distance < 100) { // Using hexSize as minimum distance
       console.log("Too close to another settlement");
       return false;
     }
