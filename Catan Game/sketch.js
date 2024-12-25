@@ -2,6 +2,7 @@
 // Canvas
 // AME 230
 //
+let op = 100;
 let treeImage, dessertImage, brickImage, oreImage, wheatImage, sheepImage;
 let image2,image3,image4,image5,image6,image8,image9,image10,image11,image12;
 let woodCard,sheepCard,grainCard,oreCard,brickCard,developmentCard;
@@ -21,9 +22,13 @@ let currentHighlightedHexes = [];
 
 let settlements = []; // Track all placed settlements
 let roads = []; // Track all placed roads
-let initialPlacement = true; // Flag for initial placement phase
+let initialPlacement = false; // Flag for initial placement phase
 
 let possibleRoadLocations = [];
+
+let isDrawingVisible = false;
+
+
 
 function preload() {
 
@@ -63,6 +68,11 @@ function setup() {
   fill(10,100,155);
   rect(10,670,350,100,10);
 
+  
+  console.log("Edges are ", generateAllHexagonEdges());
+  console.log("Edges for get_p5p2XVals are ", get_p5p2XVals());
+  
+
   const close = 20;
   rect(390-close,690,70,70,10);
   rect(470-close,690,70,70,10);
@@ -72,7 +82,10 @@ function setup() {
 
   drawSettelement(585-close,735,"Black");
   drawCity(665-close,735,"Black");
-  drawRoad(490,730,"Black");
+ // const start = [285,160];
+ // const end = [350,190];
+  //drawRoad(start,end,"Black");
+  
    
   stroke(0,0,155)
   fill(10,155,100);
@@ -101,7 +114,19 @@ function draw()
     fill(0);
     noStroke();
     text(mouseX,10,15);
-    text(mouseY,10,30);  
+    text(mouseY,10,30); 
+
+    if(isDrawingVisible == true){
+    for (let i = 0; i < currentHighlightedHexes.length; i++) { 
+
+    highLightHexagon(currentHighlightedHexes[i].x, currentHighlightedHexes[i].y, 75,op);
+    op--;
+    
+  }
+}
+
+
+    
 }
 function drawHexGrid(size)
 {
@@ -291,12 +316,15 @@ currentHighlightedHexes = [];
       resourceTaken(hexResource[i]);
       console.log("The i of the dice is:", i);
 
+      isDrawingVisible = true
      //highLightHexagon(hexPosition[i].x, hexPosition[i].y, 75,10);
       currentHighlightedHexes.push({ x: hexPosition[i].x, y: hexPosition[i].y });
-      for (let i = 0; i < currentHighlightedHexes.length; i++) {
+      
         // Use the x and y values from currentHighlightedHexes to call highLightHexagon
-        highLightHexagon(currentHighlightedHexes[i].x, currentHighlightedHexes[i].y, 75, 0);
-    }
+        isDrawingVisible = true;
+         //highLightHexagon(currentHighlightedHexes[i].x, currentHighlightedHexes[i].y, 75,100);
+        
+    
    
     }
   }
@@ -325,14 +353,14 @@ function mousePressed() {
 
     if (dist(mouseX, mouseY, closestEdge.x, closestEdge.y) < 10) {
       // Check if placement is legal before drawing settlement
-     if(settlements.length < 2){
+     if(endInitialPlacement() == true){
        if (isLegalSettlementPlacement(closestEdge.x, closestEdge.y)) {
         drawSettelement(closestEdge.x, closestEdge.y, "Green");
 
         settlements.push({ x: closestEdge.x, y: closestEdge.y });
         console.log("Settlement placed at", closestEdge.x, closestEdge.y);
       
-        const roadOptions = optionsForRoads(closestEdge.x, closestEdge.y);
+       // const roadOptions = optionsForRoads(closestEdge.x, closestEdge.y);
         console.log("Road options available:", roadOptions);
       } else {
         console.log("Illegal settlement placement");
@@ -347,8 +375,13 @@ function mousePressed() {
     }
   }
 
+  if(mouseX > 10 && mouseX < 680 &&
+     mouseY > 50 && mouseY < 650)
+     drawRoad(mouseX,mouseY,"Red");
+
 
   dicePressed();
+ 
 
 }
 
@@ -573,33 +606,57 @@ function drawRoad(Sx,Sy,color)
   {
     fill(0,0,0)
   }
-  //fill(255,0,0)
-  stroke(255);
-
-  stroke('lime');
-  strokeWeight(3);
+  function isWithinRange(value, array, margin) {
+    return array.some(item => Math.abs(item - value) <= margin);
+  }
   
 
-  const toleft = -15;
-  // Main house structure
-  beginShape();
-  // Start from top point
-  vertex(Sx, Sy-25);
-  // Right top diagonal
-  vertex(Sx+5, Sy-15);
-  // Right vertical
-  vertex(Sx+5, Sy+7);
-  // Right bottom leg
-  vertex(Sx, Sy+20);
-  // Bottom horizontal
-  vertex(Sx, Sy+20);
-  // Left bottom leg
-  vertex(Sx-5, Sy+7);
-  // Left vertical
-  vertex(Sx-5, Sy-15);
-  // Back to top point to close shape
-  vertex(Sx, Sy-25);
-  endShape();
+  let angle ;
+ 
+ const p5p2XVals = get_p5p2XVals();
+  const p0p3XVals = get_p0p3XVals();
+ const p1p4XVals = get_p1p4XVals();
+
+ const p5p2YVals = get_p5p2YVals();
+  const p0p3YVals = get_p0p3YVals();
+ const p1p4YVals = get_p1p4YVals();
+  console.log("angle before" ,angle );
+  //console.log("p5p2XVals" ,p5p2XVals );
+ // const p5p2XVals = [313, 387, 380, 455, 442, 517, 245,320, 183, 258, 178, 252, 448, 523, 515, 590, 577, 652, 112, 187, 48, 123, 113, 188];
+ // const p0p3XVals = [425, 275, 493, 343, 554, 404, 358, 208, 296, 146, 290, 140, 560, 410, 628, 478, 689, 539, 225, 75, 161, 11, 226, 76];
+ // const p1p4XVals = [388, 312, 455, 380, 517, 442, 320, 245, 258, 183, 253, 177, 523, 447, 590, 515, 652, 577, 187, 112, 123, 48, 188, 113];
+console.log("p5p2XVals" ,p5p2XVals );
+console.log("p0p3XVals" ,p0p3XVals );
+ // const p5p2YVals = [415, 285, 415, 175, 415, 285, 525, 395, 525, 395, 415, 285, 305, 175, 188, 58, 188, 58, 188, 58, 305, 175, 415, 285, 525, 395, 642, 512, 642, 512, 642, 512, 528, 398, 415, 285, 302, 172];
+ // const p0p3YVals = [350, 350, 240, 240, 350, 350, 460, 460, 460, 460, 350, 350, 240, 240, 123, 123, 123, 123, 123, 123, 240, 240, 350, 350, 460, 460, 577, 577, 577, 577, 577, 577, 463, 463, 350, 350, 237, 237];
+ // const p1p4YVals = [415, 285, 305, 175, 415, 285, 525, 395, 525, 395, 415, 285, 305, 175, 188, 58, 188, 58, 188, 58, 305, 175, 415, 285, 525, 395, 642, 512, 642, 512, 642, 512, 528, 398, 415, 285, 302, 172];
+  console.log("SX " ,Sx );
+  console.log("Sy " ,Sy );
+  if(isWithinRange(Sx,p5p2XVals,5) && isWithinRange(Sy,p5p2YVals,5)){
+    angle = 1.5;
+  }
+  else if(isWithinRange(Sx,p1p4XVals,5) || isWithinRange(Sy,p1p4YVals,5)){
+    angle = 3;
+  }
+  else if(isWithinRange(Sx,p0p3XVals,10) && isWithinRange(Sy,p0p3YVals,10)){
+    angle = 0;
+  }
+
+  console.log("angle after" ,angle );
+
+  push();
+  stroke(255);
+  translate(Sx, Sy);
+  rotate(PI/angle);
+  //rect(-width / 2, -height / 2, 10,50,10);
+  rect(-5, -25, 10, 80, 10);
+ // rect(Sx,Sy-25,10,50,10)
+  //rotate(100);
+  stroke('lime');
+  strokeWeight(3);
+  pop();
+  
+
 }
 
 function resourceQuantity(resourceName,RGX,RGY){
@@ -644,7 +701,7 @@ text(totalSheepCollected,RGX,RGY+13);
 function highLightHexagon(x, y, size,opacity) {
   fill(255, 255, 0, opacity);
   stroke(255, 255, 0);
-  strokeWeight(10);
+  strokeWeight(0);
   beginShape();
   for(let i = 0; i < 6; i++) {
   const angle = TWO_PI/6 * i;
@@ -658,7 +715,7 @@ function highLightHexagon(x, y, size,opacity) {
 function unhighLightHexagon(x, y, size,opacity) {
   fill(255, 0, 0, opacity);
   stroke(0, 0, 0);
-  strokeWeight(10);
+  strokeWeight(3);
   beginShape();
   for(let i = 0; i < 6; i++) {
   const angle = TWO_PI/6 * i;
@@ -668,6 +725,18 @@ function unhighLightHexagon(x, y, size,opacity) {
   }
   endShape(CLOSE);
   } 
+
+function endInitialPlacement() {
+  if(settlements.length < 2){
+     return initialPlacement = true;
+  }else { 
+    return initialPlacement = false;
+   }
+}
+
+
+
+
 
 //G Code
 
@@ -707,71 +776,145 @@ function isLegalSettlementPlacement(x, y) {
 }
 
 
-// Function to end initial placement phase
-function endInitialPlacement() {
-  initialPlacement = false;
+
+function calculateHexagonEdges(centerX, centerY, size) {
+  const edges = [];
+  for (let i = 0; i < 6; i++) {
+    const angle = (Math.PI / 3) * i;
+    const x = centerX + size * Math.cos(angle);
+    const y = centerY + size * Math.sin(angle);
+    edges.push({ x: Math.round(x), y: Math.round(y) });
+  }
+  return edges;
+}
+
+function generateAllHexagonEdges() {
+  const allEdges = [];
+  const hexSize = 75; // Adjust this based on your hexagon size
+  const centerX = width / 2;
+  const centerY = height / 2;
+  
+  const positions = [
+    { q: 0, r: 0 },
+    { q: 0.6, r: -0.85 },
+    { q: 1.15, r: 0 },
+    { q: 0.6, r: 0.85 },
+    { q: -0.6, r: 0.85 },
+    { q: -1.15, r: 0 },
+    { q: -0.6, r: -0.85 },
+    { q: -1.2, r: -1.75 },
+    { q: 0, r: -1.75 },
+    { q: 1.2, r: -1.75 },
+    { q: 1.8, r: -0.85 },
+    { q: 2.35, r: 0 },
+    { q: 1.8, r: 0.85 },
+    { q: 1.2, r: 1.75 },
+    { q: 0, r: 1.75 },
+    { q: -1.2, r: 1.75 },
+    { q: -1.78, r: 0.87 },
+    { q: -2.35, r: 0 },
+    { q: -1.77, r: -0.87 }
+  ];
+
+  for (let pos of positions) {
+    const hexX = centerX - 50 + pos.q * hexSize * 1.5;
+    const hexY = centerY - 50 + pos.r * hexSize * Math.sqrt(3);
+    const edges = calculateHexagonEdges(hexX, hexY, hexSize);
+    allEdges.push(edges);
+  }
+
+  return allEdges;
 }
 
 
-function isNearHexagonEdge(mouseX, mouseY, hexX, hexY, hexSize) {
-  const edgeDistance = 15; // Distance threshold for edge detection
-  
-  for (let i = 0; i < 6; i++) {
-    const angle1 = TWO_PI / 6 * i;
-    const angle2 = TWO_PI / 6 * ((i + 1) % 6);
-    
-    const x1 = hexX + sin(angle1) * hexSize;
-    const y1 = hexY + cos(angle1) * hexSize;
-    const x2 = hexX + sin(angle2) * hexSize;
-    const y2 = hexY + cos(angle2) * hexSize;
-    
-    // Calculate distance from mouse to line segment (hexagon edge)
-    const d = distToSegment(mouseX, mouseY, x1, y1, x2, y2);
-    
-    if (d < edgeDistance) {
-      return {
-        start: { x: x1, y: y1 },
-        end: { x: x2, y: y2 }
-      };
+
+function get_p5p2XVals() {
+  const result = [];
+  const allEdges = generateAllHexagonEdges()
+  for (let i = 0; i < allEdges.length; i++) {
+    const subArray = allEdges[i];
+    if (subArray.length >= 6) {
+      result.push(
+         subArray[2].x,
+         subArray[5].x
+      );
     }
   }
-  return null;
+  return result;
 }
-
-// Helper function to calculate distance from point to line segment
-function distToSegment(px, py, x1, y1, x2, y2) {
-  const A = px - x1;
-  const B = py - y1;
-  const C = x2 - x1;
-  const D = y2 - y1;
-
-  const dot = A * C + B * D;
-  const len_sq = C * C + D * D;
-  let param = -1;
-  
-  if (len_sq != 0) param = dot / len_sq;
-
-  let xx, yy;
-
-  if (param < 0) {
-    xx = x1;
-    yy = y1;
-  } else if (param > 1) {
-    xx = x2;
-    yy = y2;
-  } else {
-    xx = x1 + param * C;
-    yy = y1 + param * D;
+ function get_p0p3XVals() {
+  const result = [];
+  const allEdges = generateAllHexagonEdges()
+  for (let i = 0; i < allEdges.length; i++) {
+    const subArray = allEdges[i];
+    if (subArray.length >= 6) {
+      result.push(
+         subArray[0].x, subArray[3].x
+      );
+    }
   }
-
-  const dx = px - xx;
-  const dy = py - yy;
-  return sqrt(dx * dx + dy * dy);
+  return result;
+}
+ function get_p1p4XVals() {
+  const result = [];
+  const allEdges = generateAllHexagonEdges()
+  for (let i = 0; i < allEdges.length; i++) {
+    const subArray = allEdges[i];
+    if (subArray.length >= 6) {
+      result.push(
+         subArray[1].x,
+         subArray[4].x
+      );
+    }
+  }
+  return result;
+}
+  function get_p5p2YVals() {
+  const result = [];
+  const allEdges = generateAllHexagonEdges()
+  for (let i = 0; i < allEdges.length; i++) {
+    const subArray = allEdges[i];
+    if (subArray.length >= 6) {
+      result.push(
+         subArray[2].y,
+         subArray[5].y
+      );
+    }
+  }
+  return result;
+}
+ function get_p0p3YVals() {
+  const result = [];
+  const allEdges = generateAllHexagonEdges()
+  for (let i = 0; i < allEdges.length; i++) {
+    const subArray = allEdges[i];
+    if (subArray.length >= 6) {
+      result.push(
+       subArray[0].y,
+         subArray[3].y
+      );
+    }
+  }
+  return result;
+}
+ function get_p1p4YVals() {
+  const result = [];
+  const allEdges = generateAllHexagonEdges()
+  for (let i = 0; i < allEdges.length; i++) {
+    const subArray = allEdges[i];
+    if (subArray.length >= 6) {
+      result.push(
+         subArray[1].y,
+       subArray[4].y
+      );
+    }
+  }
+  return result;
 }
 
 
 
 
-
+//
 
 
