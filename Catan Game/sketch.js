@@ -2,7 +2,7 @@
 // Canvas
 // AME 230
 //
-let op = 100;
+
 let treeImage, dessertImage, brickImage, oreImage, wheatImage, sheepImage;
 let image2,image3,image4,image5,image6,image8,image9,image10,image11,image12;
 let woodCard,sheepCard,grainCard,oreCard,brickCard,developmentCard;
@@ -11,33 +11,35 @@ let hexPosition = [];
 let hexResource = [];
 let hexNumber = [];
 
-let totalGrainCollected = 0;
-let totalBrickCollected = 0;
+let totalGrainCollected = 2;
+let totalBrickCollected = 4;
 let totalOreCollected = 0;
-let totalWoodCollected = 0;
-let totalSheepCollected = 0;
+let totalWoodCollected = 4;
+let totalSheepCollected = 2;
 
 
 let currentHighlightedHexes = [];
 
-let settlements = []; // Track all placed settlements
-let roads = []; // Track all placed roads
+let settlements = []; 
+let roads = []; 
 let initialPlacement = false; // Flag for initial placement phase
 
 let possibleRoadLocations = [];
 
-let isDrawingVisible = false;
+let can_Build_Settelment_boo = false;
+let can_Build_Road_boo = false;
+let resourcesChanged = false;
 
 
 
 function preload() {
 
-  treeImage = loadImage("resources/tree2.png");//done
+  treeImage = loadImage("resources/tree2.png");
   dessertImage = loadImage("resources/dessert.png");
-  brickImage = loadImage("resources/brick3.png");//done
-  oreImage = loadImage("resources/oref.png");//done
+  brickImage = loadImage("resources/brick3.png");
+  oreImage = loadImage("resources/oref.png");
   wheatImage = loadImage("resources/wheat.png");
-  sheepImage = loadImage("resources/sheep1.png");//done
+  sheepImage = loadImage("resources/sheep1.png");
 
   image2 =loadImage("numbers/number2.png");
   image3 =loadImage("numbers/number3.png");
@@ -82,9 +84,7 @@ function setup() {
 
   drawSettelement(585-close,735,"Black");
   drawCity(665-close,735,"Black");
- // const start = [285,160];
- // const end = [350,190];
-  //drawRoad(start,end,"Black");
+  drawRoad(485,710,"Black");
   
    
   stroke(0,0,155)
@@ -115,17 +115,17 @@ function draw()
     noStroke();
     text(mouseX,10,15);
     text(mouseY,10,30); 
-
-    if(isDrawingVisible == true){
-    for (let i = 0; i < currentHighlightedHexes.length; i++) { 
-
-    highLightHexagon(currentHighlightedHexes[i].x, currentHighlightedHexes[i].y, 75,op);
-    op--;
-    
-  }
-}
-
-
+    /*
+    resourceQuantity("lumber",RGX+4*imageW,RGY);
+    resourceQuantity("brick",RGX+2*imageW,RGY);
+    resourceQuantity("sheep",RGX,RGY);
+    resourceQuantity("wheat",RGX+imageW,RGY);
+    resourceQuantity("ore",RGX+3*imageW,RGY);
+    console.log()*/
+    if (resourcesChanged) {
+      updateAllResourceQuantities();
+      resourcesChanged = false;
+    }
     
 }
 function drawHexGrid(size)
@@ -306,26 +306,30 @@ function diceRolled()
   //currentHighlightedHexes = [];
   for (let i = 0; i < currentHighlightedHexes.length; i++) {
     // Use the x and y values from currentHighlightedHexes to call highLightHexagon
-    unhighLightHexagon(currentHighlightedHexes[i].x, currentHighlightedHexes[i].y, 75,0);
+    unhighLightHexagon(currentHighlightedHexes[i].x, currentHighlightedHexes[i].y, 70,0);
 }
 currentHighlightedHexes = [];
 
  for(let i = 0; i < hexPosition.length; i++) {
     if(hexNumber[i] == diceSum) {
       console.log("The sum of the dice is:", diceSum);
+      console.log("hexPosition[i].x",hexPosition[i].x)
+      console.log("hexPosition[i].y",hexPosition[i].y)
+      if(hasAdjecent_Settelment(hexPosition[i].x,hexPosition[i].y)){
       resourceTaken(hexResource[i]);
+      }
       console.log("The i of the dice is:", i);
 
-      isDrawingVisible = true
+      //isDrawingVisible = true
      //highLightHexagon(hexPosition[i].x, hexPosition[i].y, 75,10);
       currentHighlightedHexes.push({ x: hexPosition[i].x, y: hexPosition[i].y });
       
         // Use the x and y values from currentHighlightedHexes to call highLightHexagon
-        isDrawingVisible = true;
+        for (let i = 0; i < currentHighlightedHexes.length; i++) { 
+          highLightHexagon(currentHighlightedHexes[i].x, currentHighlightedHexes[i].y, 70,0);
+        }
          //highLightHexagon(currentHighlightedHexes[i].x, currentHighlightedHexes[i].y, 75,100);
-        
-    
-   
+              
     }
   }
 }
@@ -353,32 +357,58 @@ function mousePressed() {
 
     if (dist(mouseX, mouseY, closestEdge.x, closestEdge.y) < 10) {
       // Check if placement is legal before drawing settlement
-     if(endInitialPlacement() == true){
+
+     if(endInitialPlacement() || can_Build_Settelment()){
+
        if (isLegalSettlementPlacement(closestEdge.x, closestEdge.y)) {
         drawSettelement(closestEdge.x, closestEdge.y, "Green");
-
+        totalBrickCollected--;
+        totalWoodCollected--;
+        totalSheepCollected--;
+        totalGrainCollected--;
+        resourcesChanged = true;
+  
+  }
         settlements.push({ x: closestEdge.x, y: closestEdge.y });
         console.log("Settlement placed at", closestEdge.x, closestEdge.y);
-      
-       // const roadOptions = optionsForRoads(closestEdge.x, closestEdge.y);
-        console.log("Road options available:", roadOptions);
       } else {
         console.log("Illegal settlement placement");
-        // Optional: Add visual feedback for illegal placement
         fill(255, 0, 0, 100);
         noStroke();
         circle(closestEdge.x, closestEdge.y, 20);
       }
       break;
+    
     }
     console.log("Illegal" ,settlements.length," has settlement placement. Now place a road");
     }
+  
+
+  let isValidEdge = false;
+
+  for (let pos of positions) {
+    const hexX = centerX - 50 + pos.q * hexWidth * 0.75;
+    const hexY = centerY - 50 + pos.r * hexHeight;
+    const closestEdge = getClosestHexEdge(hexX, hexY, hexSize);
+    
+    if (dist(mouseX, mouseY, closestEdge.x, closestEdge.y) < 10) {
+      isValidEdge = true;
+      break;
+    }
   }
-
+  if(can_Build_Road()){
   if(mouseX > 10 && mouseX < 680 &&
-     mouseY > 50 && mouseY < 650)
-     drawRoad(mouseX,mouseY,"Red");
-
+    mouseY > 50 && mouseY < 650){
+if(!(mouseX >= 600 && mouseY >= 530 &&  mouseX <= 700 && mouseY <= 580)){
+  if (!isValidEdge) {
+    drawRoad(mouseX, mouseY, "Red");
+    totalBrickCollected--;
+    totalWoodCollected--;
+    resourcesChanged = true;
+  }
+}
+    }
+  }
 
   dicePressed();
  
@@ -423,10 +453,56 @@ function resourceTaken(resourceGiven){
  }
 
 }
+function resourceQuantity(resourceName,RGX,RGY){
+  const imageW = 55;
+  const imageL = 80;
+  
+  if(resourceName == "wheat"){
+
+  textSize(20);
+  fill(0);
+  noStroke();
+  image(grainCard,RGX,RGY,imageW,imageL);
+  text(totalGrainCollected,RGX,RGY+13);
+
+  }
+  if(resourceName == "brick"){  
+    textSize(20);
+    fill(0);
+    noStroke();
+    image(brickCard,RGX,RGY,imageW,imageL);
+    text(totalBrickCollected,RGX,RGY+13);
+    }
+ if(resourceName == "ore"){  
+textSize(20);
+fill(0);
+noStroke();
+image(oreCard,RGX,RGY,imageW,imageL);
+text(totalOreCollected,RGX,RGY+13);
+}
+if(resourceName == "lumber"){  
+  
+
+textSize(20);
+fill(0);
+noStroke();
+image(woodCard,RGX,RGY,imageW,imageL);
+text(totalWoodCollected,RGX,RGY+13);
+ }
+ if(resourceName == "sheep"){  
+textSize(20);
+fill(0);
+noStroke();
+image(sheepCard,RGX,RGY,imageW,imageL);
+text(totalSheepCollected,RGX,RGY+13);
+ }
+
+}
 function dicePressed(){
   if(mouseIsPressed && mouseX >= 600 && mouseY >= 530 && mouseX <=700 && mouseY <= 580)
   {
    diceRolled();
+   console.log("can_Build_Settelment_boo",can_Build_Settelment_boo);
   }
 }
 
@@ -590,6 +666,9 @@ function drawCity(Sx,Sy,color)
 }
 function drawRoad(Sx,Sy,color)
 {
+  
+  
+      
   if(color == "Red")
   {
     fill(255,0,0)
@@ -613,23 +692,17 @@ function drawRoad(Sx,Sy,color)
 
   let angle ;
  
- const p5p2XVals = get_p5p2XVals();
-  const p0p3XVals = get_p0p3XVals();
- const p1p4XVals = get_p1p4XVals();
+const p5p2XVals = get_p5p2XVals();
+const p0p3XVals = get_p0p3XVals();
+const p1p4XVals = get_p1p4XVals();
 
- const p5p2YVals = get_p5p2YVals();
-  const p0p3YVals = get_p0p3YVals();
- const p1p4YVals = get_p1p4YVals();
-  console.log("angle before" ,angle );
-  //console.log("p5p2XVals" ,p5p2XVals );
- // const p5p2XVals = [313, 387, 380, 455, 442, 517, 245,320, 183, 258, 178, 252, 448, 523, 515, 590, 577, 652, 112, 187, 48, 123, 113, 188];
- // const p0p3XVals = [425, 275, 493, 343, 554, 404, 358, 208, 296, 146, 290, 140, 560, 410, 628, 478, 689, 539, 225, 75, 161, 11, 226, 76];
- // const p1p4XVals = [388, 312, 455, 380, 517, 442, 320, 245, 258, 183, 253, 177, 523, 447, 590, 515, 652, 577, 187, 112, 123, 48, 188, 113];
+const p5p2YVals = get_p5p2YVals();
+const p0p3YVals = get_p0p3YVals();
+const p1p4YVals = get_p1p4YVals();
+
+console.log("angle before" ,angle );
 console.log("p5p2XVals" ,p5p2XVals );
 console.log("p0p3XVals" ,p0p3XVals );
- // const p5p2YVals = [415, 285, 415, 175, 415, 285, 525, 395, 525, 395, 415, 285, 305, 175, 188, 58, 188, 58, 188, 58, 305, 175, 415, 285, 525, 395, 642, 512, 642, 512, 642, 512, 528, 398, 415, 285, 302, 172];
- // const p0p3YVals = [350, 350, 240, 240, 350, 350, 460, 460, 460, 460, 350, 350, 240, 240, 123, 123, 123, 123, 123, 123, 240, 240, 350, 350, 460, 460, 577, 577, 577, 577, 577, 577, 463, 463, 350, 350, 237, 237];
- // const p1p4YVals = [415, 285, 305, 175, 415, 285, 525, 395, 525, 395, 415, 285, 305, 175, 188, 58, 188, 58, 188, 58, 305, 175, 415, 285, 525, 395, 642, 512, 642, 512, 642, 512, 528, 398, 415, 285, 302, 172];
   console.log("SX " ,Sx );
   console.log("Sy " ,Sy );
   if(isWithinRange(Sx,p5p2XVals,5) && isWithinRange(Sy,p5p2YVals,5)){
@@ -642,66 +715,32 @@ console.log("p0p3XVals" ,p0p3XVals );
     angle = 0;
   }
 
+  const road = {
+    start: { x: Sx, y: Sy },
+    end: { x: Sx + 80 * cos(PI/angle), y: Sy + 80 * sin(PI/angle) },
+    color: color
+  };
+
+
+  roads.push(road);
   console.log("angle after" ,angle );
 
   push();
   stroke(255);
   translate(Sx, Sy);
   rotate(PI/angle);
-  //rect(-width / 2, -height / 2, 10,50,10);
-  rect(-5, -25, 10, 80, 10);
- // rect(Sx,Sy-25,10,50,10)
-  //rotate(100);
+  rect(-5, -25, 10, 70, 10);
   stroke('lime');
   strokeWeight(3);
   pop();
-  
-
 }
 
-function resourceQuantity(resourceName,RGX,RGY){
-  if(resourceName == "wheat"){
 
-  textSize(20);
-  fill(0);
-  noStroke();
-  text(totalGrainCollected,RGX,RGY+13);
-
-  }
-  if(resourceName == "brick"){  
-    textSize(20);
-    fill(0);
-    noStroke();
-    text(totalBrickCollected,RGX,RGY+13);
-    }
- if(resourceName == "ore"){  
-textSize(20);
-fill(0);
-noStroke();
-text(totalOreCollected,RGX,RGY+13);
-}
-if(resourceName == "lumber"){  
-  
- // fill(255);
-  //rect(RGX+2,RGY-15,20,20)
-textSize(20);
-fill(0);
-noStroke();
-text(totalWoodCollected,RGX,RGY+13);
- }
- if(resourceName == "sheep"){  
-textSize(20);
-fill(0);
-noStroke();
-text(totalSheepCollected,RGX,RGY+13);
- }
-
-}
 
 function highLightHexagon(x, y, size,opacity) {
   fill(255, 255, 0, opacity);
   stroke(255, 255, 0);
-  strokeWeight(0);
+  strokeWeight(2);
   beginShape();
   for(let i = 0; i < 6; i++) {
   const angle = TWO_PI/6 * i;
@@ -715,7 +754,7 @@ function highLightHexagon(x, y, size,opacity) {
 function unhighLightHexagon(x, y, size,opacity) {
   fill(255, 0, 0, opacity);
   stroke(0, 0, 0);
-  strokeWeight(3);
+  strokeWeight(2);
   beginShape();
   for(let i = 0; i < 6; i++) {
   const angle = TWO_PI/6 * i;
@@ -734,18 +773,14 @@ function endInitialPlacement() {
    }
 }
 
-
-
-
-
 //G Code
-
+     //  \= mid;
 
 function isLegalSettlementPlacement(x, y) {
-  // Check distance rule (no settlements within 2 road segments)
+
   for (let settlement of settlements) {
     const distance = dist(x, y, settlement.x, settlement.y);
-    if (distance < 100) { // Using hexSize as minimum distance
+    if (distance < 45) { // Using hexSize as minimum distance
       console.log("Too close to another settlement");
       return false;
     }
@@ -761,7 +796,10 @@ function isLegalSettlementPlacement(x, y) {
   for (let road of roads) {
     const distToRoadStart = dist(x, y, road.start.x, road.start.y);
     const distToRoadEnd = dist(x, y, road.end.x, road.end.y);
-    if (distToRoadStart < 10 || distToRoadEnd < 10) {
+    console.log("roads",roads);
+    console.log("distend",distToRoadEnd );
+    console.log("diststart",distToRoadStart )
+    if (distToRoadStart < 45 || distToRoadEnd < 45) {
       hasConnectedRoad = true;
       break;
     }
@@ -774,8 +812,6 @@ function isLegalSettlementPlacement(x, y) {
 
   return true;
 }
-
-
 
 function calculateHexagonEdges(centerX, centerY, size) {
   const edges = [];
@@ -825,7 +861,6 @@ function generateAllHexagonEdges() {
 
   return allEdges;
 }
-
 
 
 function get_p5p2XVals() {
@@ -915,6 +950,53 @@ function get_p5p2XVals() {
 
 
 
-//
+//Check if we have enough resourcess
+function can_Build_Settelment(){
+
+  console.log("Resources",totalSheepCollected,totalGrainCollected,totalBrickCollected,
+  totalWoodCollected);
+  if(totalGrainCollected > 0 &&
+    totalBrickCollected > 0&&
+    totalWoodCollected > 0  &&
+    totalSheepCollected > 0 ){
+     return  can_Build_Settelment_boo = true;
+    }
+    else {
+      return can_Build_Settelment_boo = false;
+    }
+}
+
+function can_Build_Road(){
+
+  if(totalBrickCollected > 0 &&
+      totalWoodCollected > 0 ){
+     return  can_Build_Road_boo = true;
+    }
+    else {
+      return can_Build_Road_boo = false;
+    }
+}
 
 
+//check for the settelment before giving resources 
+function hasAdjecent_Settelment(hexX,hexY){
+  for(let settelment of settlements){
+    if(dist(hexX,hexY,settelment.x,settelment.y)<80){
+      return true;
+    }
+  }
+  return false;
+}
+
+
+function updateAllResourceQuantities() {
+  const RGX = 20;
+  const RGY = 690;
+  const imageW = 55;
+  const imageL = 80;
+  resourceQuantity("wheat", RGX + imageW, RGY);
+  resourceQuantity("brick", RGX + 2 * imageW, RGY);
+  resourceQuantity("ore", RGX + 3 * imageW, RGY);
+  resourceQuantity("lumber", RGX + 4 * imageW, RGY);
+  resourceQuantity("sheep", RGX, RGY);
+}
