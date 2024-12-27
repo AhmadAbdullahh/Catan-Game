@@ -7,6 +7,7 @@ let treeImage, dessertImage, brickImage, oreImage, wheatImage, sheepImage;
 let image2,image3,image4,image5,image6,image8,image9,image10,image11,image12;
 let woodCard,sheepCard,grainCard,oreCard,brickCard,developmentCard;
 
+
 let hexPosition = [];
 let hexResource = [];
 let hexNumber = [];
@@ -17,19 +18,20 @@ let totalOreCollected = 0;
 let totalWoodCollected = 4;
 let totalSheepCollected = 2;
 
+let totalPoints = 0;
 
 let currentHighlightedHexes = [];
 
 let settlements = []; 
 let roads = []; 
-let initialPlacement = false; // Flag for initial placement phase
-
 let possibleRoadLocations = [];
+const hexSideAngles = [0, 60, 120, 180, 240, 300];
+
 
 let can_Build_Settelment_boo = false;
 let can_Build_Road_boo = false;
 let resourcesChanged = false;
-
+let initialPlacement = false;
 
 
 function preload() {
@@ -69,12 +71,7 @@ function setup() {
   stroke(255)
   fill(10,100,155);
   rect(10,670,350,100,10);
-
   
-  console.log("Edges are ", generateAllHexagonEdges());
-  console.log("Edges for get_p5p2XVals are ", get_p5p2XVals());
-  
-
   const close = 20;
   rect(390-close,690,70,70,10);
   rect(470-close,690,70,70,10);
@@ -84,9 +81,9 @@ function setup() {
 
   drawSettelement(585-close,735,"Black");
   drawCity(665-close,735,"Black");
-  drawRoad(485,710,"Black");
+  //drawRoad(485,710,"Black");
+  rect(480,700,10,55,10)
   
-   
   stroke(0,0,155)
   fill(10,155,100);
   rect(690,20,100,420,10);
@@ -115,17 +112,11 @@ function draw()
     noStroke();
     text(mouseX,10,15);
     text(mouseY,10,30); 
-    /*
-    resourceQuantity("lumber",RGX+4*imageW,RGY);
-    resourceQuantity("brick",RGX+2*imageW,RGY);
-    resourceQuantity("sheep",RGX,RGY);
-    resourceQuantity("wheat",RGX+imageW,RGY);
-    resourceQuantity("ore",RGX+3*imageW,RGY);
-    console.log()*/
     if (resourcesChanged) {
       updateAllResourceQuantities();
       resourcesChanged = false;
     }
+    displayPoints();
     
 }
 function drawHexGrid(size)
@@ -372,6 +363,7 @@ function mousePressed() {
         totalSheepCollected--;
         totalGrainCollected--;
         resourcesChanged = true;
+        totalPoints++;
 
         settlements.push({ x: closestEdge.x, y: closestEdge.y });
         console.log("Settlement placed at", closestEdge.x, closestEdge.y);
@@ -403,7 +395,15 @@ function mousePressed() {
       break;
     }
   }
+  for (let pos of positions) {
+    const hexX = centerX - 50 + pos.q * hexWidth * 0.75;
+    const hexY = centerY - 50 + pos.r * hexHeight;
+    const closestEdge = getClosestHexEdge(hexX, hexY, hexSize);
+    
   if(can_Build_Road()){
+    console.log("road is being placed");
+   if (is_Legal_Road_Placment(closestEdge.x, closestEdge.y)){
+    console.log("road will be placed");
   if(mouseX > 10 && mouseX < 680 &&
     mouseY > 50 && mouseY < 650){
 if(!(mouseX >= 600 && mouseY >= 530 &&  mouseX <= 700 && mouseY <= 580)){
@@ -416,6 +416,10 @@ if(!(mouseX >= 600 && mouseY >= 530 &&  mouseX <= 700 && mouseY <= 580)){
 }
     }
   }
+  console.log("road not legal");
+  }
+  break;
+}
 
   dicePressed();
  
@@ -671,76 +675,73 @@ function drawCity(Sx,Sy,color)
 
   rect(Sx-5,Sy-38,10,20)
 }
-function drawRoad(Sx,Sy,color)
-{
+function drawRoad(Sx, Sy, color) {
+  const hexSize = 75; 
+  const closestHexCenter = getClosestHexCenter(Sx, Sy);
+  const sideAngle = getClosestHexSide(Sx, Sy, closestHexCenter.x, closestHexCenter.y, hexSize);
   
-  
-      
-  if(color == "Red")
-  {
-    fill(255,0,0)
-  }
-  else if(color == "Blue")
-  {
-    fill(0,0,255)
-  }
-  else if(color == "Green")
-  {
-    fill(0,200,100)
-  }
-  else if(color == "Black")
-  {
-    fill(0,0,0)
-  }
-  function isWithinRange(value, array, margin) {
-    return array.some(item => Math.abs(item - value) <= margin);
+  if(color == "Red") {
+    fill(255,0,0);
+  } else if(color == "Blue") {
+    fill(0,0,255);
+  } else if(color == "Green") {
+    fill(0,200,100);
+  } else if(color == "Black") {
+    fill(0,0,0);
   }
   
-
-  let angle ;
- 
-const p5p2XVals = get_p5p2XVals();
-const p0p3XVals = get_p0p3XVals();
-const p1p4XVals = get_p1p4XVals();
-
-const p5p2YVals = get_p5p2YVals();
-const p0p3YVals = get_p0p3YVals();
-const p1p4YVals = get_p1p4YVals();
-
-console.log("angle before" ,angle );
-console.log("p5p2XVals" ,p5p2XVals );
-console.log("p0p3XVals" ,p0p3XVals );
-  console.log("SX " ,Sx );
-  console.log("Sy " ,Sy );
-  if(isWithinRange(Sx,p5p2XVals,5) && isWithinRange(Sy,p5p2YVals,5)){
-    angle = 1.5;
-  }
-  else if(isWithinRange(Sx,p1p4XVals,5) || isWithinRange(Sy,p1p4YVals,5)){
-    angle = 3;
-  }
-  else if(isWithinRange(Sx,p0p3XVals,10) && isWithinRange(Sy,p0p3YVals,10)){
-    angle = 0;
-  }
-
-  const road = {
-    start: { x: Sx, y: Sy },
-    end: { x: Sx + 80 * cos(PI/angle), y: Sy + 80 * sin(PI/angle) },
-    color: color
-  };
-
-
-  roads.push(road);
-  console.log("angle after" ,angle );
-
   push();
   stroke(255);
-  translate(Sx, Sy);
-  rotate(PI/angle);
-  rect(-5, -25, 10, 70, 10);
+  translate(closestHexCenter.x, closestHexCenter.y);
+  rotate(radians(sideAngle));
+  rect(60, -hexSize/2, 10, hexSize, 10);
   stroke('lime');
   strokeWeight(3);
   pop();
+  
+  const road = {
+    start: { x: closestHexCenter.x, y: closestHexCenter.y },
+    end: { 
+      x: closestHexCenter.x + hexSize * cos(radians(sideAngle)), 
+      y: closestHexCenter.y + hexSize * sin(radians(sideAngle)) 
+    },
+    color: color
+  };
+  
+  roads.push(road);
 }
+function getClosestHexCenter(x, y) {
+  let closest = null;
+  let minDist = Infinity;
+  
+  for (let hex of hexPosition) {
+    const d = dist(x, y, hex.x, hex.y);
+    if (d < minDist) {
+      minDist = d;
+      closest = hex;
+    }
+  }
+  
+  return closest;
+}
+function getClosestHexSide(x, y, hexX, hexY, hexSize) {
+  let closestAngle = 0;
+  let shortestDistance = Infinity;
+
+  for (let angle of hexSideAngles) {
+    let sideX = hexX + hexSize * cos(radians(angle));
+    let sideY = hexY + hexSize * sin(radians(angle));
+    let distance = dist(x, y, sideX, sideY);
+
+    if (distance < shortestDistance) {
+      shortestDistance = distance;
+      closestAngle = angle;
+    }
+  }
+
+  return closestAngle;
+}
+
 
 
 
@@ -780,8 +781,6 @@ function endInitialPlacement() {
    }
 }
 
-//G Code
-     //  \= mid;
 
 function isLegalSettlementPlacement(x, y) {
 
@@ -818,6 +817,26 @@ function isLegalSettlementPlacement(x, y) {
   }
 
   return true;
+}
+function is_Legal_Road_Placment(x,y){
+  let hasConnectedRoad = false;
+  if(roads.length < 3){
+    hasConnectedRoad = true;
+  }
+  else{
+  for(let road of roads){
+    const distToRoadStart = dist(x,y,road.start.x,road.start.y);
+    const distToRoadEnd = dist(x,y,road.end.x,road.end.y);
+    console.log("distance calculating");
+    if(distToRoadStart < 95 || distToRoadEnd < 95){
+      console.log("distance calculated");
+      hasConnectedRoad = true;
+      break;
+    }
+  }
+
+}
+  return hasConnectedRoad;
 }
 
 function calculateHexagonEdges(centerX, centerY, size) {
@@ -870,92 +889,6 @@ function generateAllHexagonEdges() {
 }
 
 
-function get_p5p2XVals() {
-  const result = [];
-  const allEdges = generateAllHexagonEdges()
-  for (let i = 0; i < allEdges.length; i++) {
-    const subArray = allEdges[i];
-    if (subArray.length >= 6) {
-      result.push(
-         subArray[2].x,
-         subArray[5].x
-      );
-    }
-  }
-  return result;
-}
- function get_p0p3XVals() {
-  const result = [];
-  const allEdges = generateAllHexagonEdges()
-  for (let i = 0; i < allEdges.length; i++) {
-    const subArray = allEdges[i];
-    if (subArray.length >= 6) {
-      result.push(
-         subArray[0].x, subArray[3].x
-      );
-    }
-  }
-  return result;
-}
- function get_p1p4XVals() {
-  const result = [];
-  const allEdges = generateAllHexagonEdges()
-  for (let i = 0; i < allEdges.length; i++) {
-    const subArray = allEdges[i];
-    if (subArray.length >= 6) {
-      result.push(
-         subArray[1].x,
-         subArray[4].x
-      );
-    }
-  }
-  return result;
-}
-  function get_p5p2YVals() {
-  const result = [];
-  const allEdges = generateAllHexagonEdges()
-  for (let i = 0; i < allEdges.length; i++) {
-    const subArray = allEdges[i];
-    if (subArray.length >= 6) {
-      result.push(
-         subArray[2].y,
-         subArray[5].y
-      );
-    }
-  }
-  return result;
-}
- function get_p0p3YVals() {
-  const result = [];
-  const allEdges = generateAllHexagonEdges()
-  for (let i = 0; i < allEdges.length; i++) {
-    const subArray = allEdges[i];
-    if (subArray.length >= 6) {
-      result.push(
-       subArray[0].y,
-         subArray[3].y
-      );
-    }
-  }
-  return result;
-}
- function get_p1p4YVals() {
-  const result = [];
-  const allEdges = generateAllHexagonEdges()
-  for (let i = 0; i < allEdges.length; i++) {
-    const subArray = allEdges[i];
-    if (subArray.length >= 6) {
-      result.push(
-         subArray[1].y,
-       subArray[4].y
-      );
-    }
-  }
-  return result;
-}
-
-
-
 
 //Check if we have enough resourcess
 function can_Build_Settelment(){
@@ -984,8 +917,6 @@ function can_Build_Road(){
     }
 }
 
-
-//check for the settelment before giving resources 
 function countAdjecent_Settelment(hexX,hexY){
   let count = 0;
 
@@ -997,7 +928,6 @@ function countAdjecent_Settelment(hexX,hexY){
   return count;
 }
 
-
 function updateAllResourceQuantities() {
   const RGX = 20;
   const RGY = 690;
@@ -1008,4 +938,21 @@ function updateAllResourceQuantities() {
   resourceQuantity("ore", RGX + 3 * imageW, RGY);
   resourceQuantity("lumber", RGX + 4 * imageW, RGY);
   resourceQuantity("sheep", RGX, RGY);
+}
+
+function displayPoints(){
+
+  push();
+  fill(255, 140, 0); 
+  rect(525,2,155,40,10)
+  pop();
+  fill('white');
+  textFont("Impact");
+  textSize(22);
+  text("Total Points: " + totalPoints, 530, 30);
+
+  if(roads.length > 7 ){
+    totalPoints++
+    totalPoints++
+  }
 }
