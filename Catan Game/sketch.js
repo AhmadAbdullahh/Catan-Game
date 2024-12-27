@@ -294,8 +294,8 @@ function drawDice(x, y, size, value) {
 }
 function diceRolled()
 {
-  const dice1Value = int(random(1, 7)); // Random number between 1 and 6
-  const dice2Value = int(random(1, 7)); // Random number between 1 and 6
+  const dice1Value = int(random(1, 7)); 
+  const dice2Value = int(random(1, 7)); 
   console.log("dice1Value is ",dice1Value);
   console.log("dice2Value is ",dice2Value);
   drawDice(600, 530, 50, dice1Value);
@@ -303,9 +303,9 @@ function diceRolled()
 
   const diceSum = dice1Value + dice2Value;
 
-  //currentHighlightedHexes = [];
+
   for (let i = 0; i < currentHighlightedHexes.length; i++) {
-    // Use the x and y values from currentHighlightedHexes to call highLightHexagon
+   
     unhighLightHexagon(currentHighlightedHexes[i].x, currentHighlightedHexes[i].y, 70,0);
 }
 currentHighlightedHexes = [];
@@ -315,8 +315,12 @@ currentHighlightedHexes = [];
       console.log("The sum of the dice is:", diceSum);
       console.log("hexPosition[i].x",hexPosition[i].x)
       console.log("hexPosition[i].y",hexPosition[i].y)
-      if(hasAdjecent_Settelment(hexPosition[i].x,hexPosition[i].y)){
-      resourceTaken(hexResource[i]);
+
+      const settlementCount = countAdjecent_Settelment(hexPosition[i].x, hexPosition[i].y);
+      if (settlementCount > 0) {
+        for (let j = 0; j < settlementCount; j++) {
+          resourceTaken(hexResource[i]);
+        }
       }
       console.log("The i of the dice is:", i);
 
@@ -362,15 +366,18 @@ function mousePressed() {
 
        if (isLegalSettlementPlacement(closestEdge.x, closestEdge.y)) {
         drawSettelement(closestEdge.x, closestEdge.y, "Green");
+
         totalBrickCollected--;
         totalWoodCollected--;
         totalSheepCollected--;
         totalGrainCollected--;
         resourcesChanged = true;
-  
-  }
+
         settlements.push({ x: closestEdge.x, y: closestEdge.y });
         console.log("Settlement placed at", closestEdge.x, closestEdge.y);
+  
+  }
+        
       } else {
         console.log("Illegal settlement placement");
         fill(255, 0, 0, 100);
@@ -780,8 +787,8 @@ function isLegalSettlementPlacement(x, y) {
 
   for (let settlement of settlements) {
     const distance = dist(x, y, settlement.x, settlement.y);
-    if (distance < 45) { // Using hexSize as minimum distance
-      console.log("Too close to another settlement");
+    if (distance < 85) { // Using hexSize as minimum distance
+      console.log("Too close to another settlement",dist(x, y, settlement.x, settlement.y));
       return false;
     }
   }
@@ -979,13 +986,15 @@ function can_Build_Road(){
 
 
 //check for the settelment before giving resources 
-function hasAdjecent_Settelment(hexX,hexY){
+function countAdjecent_Settelment(hexX,hexY){
+  let count = 0;
+
   for(let settelment of settlements){
     if(dist(hexX,hexY,settelment.x,settelment.y)<80){
-      return true;
+      count++;
     }
   }
-  return false;
+  return count;
 }
 
 
