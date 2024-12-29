@@ -60,7 +60,7 @@ class Player {
       cities: [],
       roads: []
     };
-    this.developmentcards = [];
+    this.developmentCards = [];
     this.victoryPoints = 0;
   }
 }
