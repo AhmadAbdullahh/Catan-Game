@@ -23,17 +23,47 @@ let totalPoints = 0;
 let currentHighlightedHexes = [];
 
 let settlements = []; 
+let cities = [];
 let roads = []; 
 let possibleRoadLocations = [];
+let confetti = [];
 const hexSideAngles = [0, 60, 120, 180, 240, 300];
 
 
 let can_Build_Settelment_boo = false;
 let can_Build_Road_boo = false;
 let resourcesChanged = false;
-let initialPlacement = false;
+let initialPlacement = true;
 
 
+
+let players = [];
+let currentPlayerIndex = 0;
+
+let bgColor;
+
+
+
+class Player {
+  constructor(id, color) {
+    this.id = id;
+    this.color = color;
+    this.resources = {
+      wood: 40,
+      brick: 40,
+      ore: 40,
+      grain: 42,
+      sheep: 42
+    };
+    this.structures = {
+      settlements: [],
+      cities: [],
+      roads: []
+    };
+    this.developmentCards = [];
+    this.victoryPoints = 0;
+  }
+}
 function preload() {
 
   treeImage = loadImage("resources/tree2.png");
@@ -65,7 +95,10 @@ function preload() {
 }
 function setup() {
   createCanvas(800, 800);
-  background(230,190,100);
+  push(); 
+  bgColor = updatePlayerTurnDisplay(currentPlayerIndex);
+  background(bgColor);
+  pop();
   drawHexGrid(75);
 
   stroke(255)
@@ -77,12 +110,12 @@ function setup() {
   rect(470-close,690,70,70,10);
   rect(550-close,690,70,70,10);
   rect(630-close,690,70,70,10);
-  rect(710-close,690,70,70,10);
+  rect(690,690,70,70,100);
+  
 
   drawSettelement(585-close,735,"Black");
   drawCity(665-close,735,"Black");
-  //drawRoad(485,710,"Black");
-  rect(480,700,10,55,10)
+  rect(480,700,10,55,10)//for road
   
   stroke(0,0,155)
   fill(10,155,100);
@@ -102,6 +135,10 @@ function setup() {
   image(oreCard,imageX,imageY+3*imageL+10,imageW,imageL);
   image(brickCard,imageX,imageY+4*imageL+10,imageW,imageL);
   image(developmentCard,imageX,imageY+5*imageL+45,imageW,imageL);
+
+
+  players.push(new Player(0, color(255, 0, 0)));
+  players.push(new Player(1, color(0, 255, 0)));
 }
 function draw()
 {
@@ -117,6 +154,16 @@ function draw()
       resourcesChanged = false;
     }
     displayPoints();
+    for (let player of players){
+      if (player.victoryPoints >= 10){
+        createConfetti();
+        drawConfetti();
+      }
+      
+    }
+    
+
+
     
 }
 function drawHexGrid(size)
@@ -307,12 +354,30 @@ currentHighlightedHexes = [];
       console.log("hexPosition[i].x",hexPosition[i].x)
       console.log("hexPosition[i].y",hexPosition[i].y)
 
-      const settlementCount = countAdjecent_Settelment(hexPosition[i].x, hexPosition[i].y);
+      for (let player of players) {
+      /*const settlementCount = countAdjecent_Settelment(hexPosition[i].x, hexPosition[i].y,player);
       if (settlementCount > 0) {
         for (let j = 0; j < settlementCount; j++) {
           resourceTaken(hexResource[i]);
         }
       }
+    }
+      for (let player of players) {
+      const cityCount =  countAdjecent_City(hexPosition[i].x, hexPosition[i].y,player);
+      if (cityCount > 0) {
+        for (let j = 0; j < settlementCount; j++) {
+          resourceTaken(hexResource[i]);
+          resourceTaken(hexResource[i]);
+        }
+        }*/
+        const settlementCount = countAdjecent_Settelment(hexPosition[i].x, hexPosition[i].y, player);
+        const cityCount = countAdjecent_City(hexPosition[i].x, hexPosition[i].y, player);
+        const resourceCount = settlementCount + (cityCount * 2);
+        for (let j = 0; j < resourceCount; j++) {
+          resourceTaken(hexResource[i], player);
+        }
+      }
+      
       console.log("The i of the dice is:", i);
 
       //isDrawingVisible = true
@@ -324,190 +389,120 @@ currentHighlightedHexes = [];
           highLightHexagon(currentHighlightedHexes[i].x, currentHighlightedHexes[i].y, 70,0);
         }
          //highLightHexagon(currentHighlightedHexes[i].x, currentHighlightedHexes[i].y, 75,100);
-              
+      }       
     }
   }
-}
 function mousePressed() {
-  const hexSize = 75; 
+  let currentPlayer = players[currentPlayerIndex];
+  const hexSize = 75;
   const hexHeight = sqrt(3) * hexSize;
   const hexWidth = 2 * hexSize;
   const centerX = width / 2;
   const centerY = height / 2;
 
+
+
   const positions = [
     { q: 0, r: 0 },
-    { q: 0.6, r: -0.85 }, { q: 1.15, r: 0 }, { q: 0.6, r: 0.85 },
-    { q: -0.6, r: 0.85 }, { q: -1.15, r: 0 }, { q: -0.6, r: -0.85 },
-    { q: -1.2, r: -1.75 }, { q: 0, r: -1.75 }, { q: 1.2, r: -1.75 },
-    { q: 1.8, r: -0.85 }, { q: 2.35, r: 0 }, { q: 1.8, r: 0.85 },
-    { q: 1.2, r: 1.75 }, { q: 0, r: 1.75 }, { q: -1.2, r: 1.75 },
-    { q: -1.78, r: 0.87 }, { q: -2.35, r: 0 }, { q: -1.77, r: -0.87 }
+    { q: 0.6, r: -0.85 },
+    { q: 1.15, r: 0 },
+    { q: 0.6, r: 0.85 },
+    { q: -0.6, r: 0.85 },
+    { q: -1.15, r: 0 },
+    { q: -0.6, r: -0.85 },
+    { q: -1.2, r: -1.75 },
+    { q: 0, r: -1.75 },
+    { q: 1.2, r: -1.75 },
+    { q: 1.8, r: -0.85 },
+    { q: 2.35, r: 0 },
+    { q: 1.8, r: 0.85 },
+    { q: 1.2, r: 1.75 },
+    { q: 0, r: 1.75 },
+    { q: -1.2, r: 1.75 },
+    { q: -1.78, r: 0.87 },
+    { q: -2.35, r: 0 },
+    { q: -1.77, r: -0.87 }
   ];
-
-  for (let pos of positions) {
-    const hexX = centerX - 50 + pos.q * hexWidth * 0.75;
-    const hexY = centerY - 50 + pos.r * hexHeight;
-    const closestEdge = getClosestHexEdge(hexX, hexY, hexSize);
-
-    if (dist(mouseX, mouseY, closestEdge.x, closestEdge.y) < 10) {
-      // Check if placement is legal before drawing settlement
-
-     if(endInitialPlacement() || can_Build_Settelment()){
-
-       if (isLegalSettlementPlacement(closestEdge.x, closestEdge.y)) {
-        drawSettelement(closestEdge.x, closestEdge.y, "Green");
-
-        totalBrickCollected--;
-        totalWoodCollected--;
-        totalSheepCollected--;
-        totalGrainCollected--;
-        resourcesChanged = true;
-        totalPoints++;
-
-        settlements.push({ x: closestEdge.x, y: closestEdge.y });
-        console.log("Settlement placed at", closestEdge.x, closestEdge.y);
+  // Settlement placement
+  if (can_Build_Settelment(currentPlayer)) {
   
+    for (let pos of positions) {
+      const hexX = centerX - 50 + pos.q * hexWidth * 0.75;
+      const hexY = centerY - 50 + pos.r * hexHeight;
+      const closestEdge = getClosestHexEdge(hexX, hexY, hexSize);
+
+      if (dist(mouseX, mouseY, closestEdge.x, closestEdge.y) < 20) {
+        if (isLegalSettlementPlacement(closestEdge.x, closestEdge.y)) {
+          drawSettelement(closestEdge.x, closestEdge.y, currentPlayer.color);
+          currentPlayer.resources.brick--;
+          currentPlayer.resources.wood--;
+          currentPlayer.resources.sheep--;
+          currentPlayer.resources.grain--;
+          resourcesChanged = true;
+          currentPlayer.victoryPoints++;
+          currentPlayer.structures.settlements.push({ x: closestEdge.x, y: closestEdge.y });
+          console.log("Settlement placed at", closestEdge.x, closestEdge.y);
+         // nextTurn();
+         return;
+        } else {
+          console.log("Illegal settlement placement");
+          fill(255, 0, 0, 100);
+          noStroke();
+          circle(closestEdge.x, closestEdge.y, 20);
+        }
+        break;
+      }
+    }
   }
-        
-      } else {
-        console.log("Illegal settlement placement");
-        fill(255, 0, 0, 100);
-        noStroke();
-        circle(closestEdge.x, closestEdge.y, 20);
+
+  // Road placement
+  if (can_Build_Road(currentPlayer)) {
+    for (let pos of positions) {
+      const hexX = centerX - 50 + pos.q * hexWidth * 0.75;
+      const hexY = centerY - 50 + pos.r * hexHeight;
+      const closestEdge = getClosestHexEdge(hexX, hexY, hexSize);
+      console.log("1");
+      if (isLegalRoadPlacement(closestEdge.x, closestEdge.y, currentPlayer)) {
+       
+        console.log("2",dist(mouseX,mouseY,closestEdge.x,closestEdge.y));
+      if (mouseX > 10 && mouseX < 680 && mouseY > 50 && mouseY < 650) {
+        //if( dist(mouseX,mouseY,closestEdge.x,closestEdge.y)>45){
+          console.log("3");
+         if (!(mouseX >= 600 && mouseY >= 530 && mouseX <= 700 && mouseY <= 580)) {
+            drawRoad(mouseX, mouseY, currentPlayer.color);
+            currentPlayer.resources.brick--;
+            currentPlayer.resources.wood--;
+            resourcesChanged = true;
+          //  nextTurn();
+     //   }
+        }
+       }
       }
       break;
-    
     }
-    console.log("Illegal" ,settlements.length," has settlement placement. Now place a road");
-    }
-  
+  }
 
-  let isValidEdge = false;
+  // City upgrade
+  if (settelment_to_City(currentPlayer)) {
+    for (let settlement of currentPlayer.structures.settlements) {
+      if (dist(mouseX, mouseY, settlement.x, settlement.y) < 15) {
+        drawCity(settlement.x, settlement.y, currentPlayer.color);
+        currentPlayer.victoryPoints++;
+        currentPlayer.resources.grain -= 2;
+        currentPlayer.resources.ore -= 3;
+        resourcesChanged = true;
+        // Remove settlement and add city
+        currentPlayer.structures.settlements = currentPlayer.structures.settlements.filter(s => s !== settlement);
+        currentPlayer.structures.cities.push({ x: settlement.x, y: settlement.y });
+       // nextTurn();
+        break;
+      }
+    }
+  }
 
-  for (let pos of positions) {
-    const hexX = centerX - 50 + pos.q * hexWidth * 0.75;
-    const hexY = centerY - 50 + pos.r * hexHeight;
-    const closestEdge = getClosestHexEdge(hexX, hexY, hexSize);
-    
-    if (dist(mouseX, mouseY, closestEdge.x, closestEdge.y) < 10) {
-      isValidEdge = true;
-      break;
-    }
-  }
-  for (let pos of positions) {
-    const hexX = centerX - 50 + pos.q * hexWidth * 0.75;
-    const hexY = centerY - 50 + pos.r * hexHeight;
-    const closestEdge = getClosestHexEdge(hexX, hexY, hexSize);
-    
-  if(can_Build_Road()){
-    console.log("road is being placed");
-   if (is_Legal_Road_Placment(closestEdge.x, closestEdge.y)){
-    console.log("road will be placed");
-  if(mouseX > 10 && mouseX < 680 &&
-    mouseY > 50 && mouseY < 650){
-if(!(mouseX >= 600 && mouseY >= 530 &&  mouseX <= 700 && mouseY <= 580)){
-  if (!isValidEdge) {
-    drawRoad(mouseX, mouseY, "Red");
-    totalBrickCollected--;
-    totalWoodCollected--;
-    resourcesChanged = true;
-  }
-}
-    }
-  }
-  console.log("road not legal");
-  }
-  break;
-}
+  turnButton();
 
   dicePressed();
- 
-
-}
-
-function resourceTaken(resourceGiven){
-
-  const RGX = 20;
-  const RGY = 690;
-  const imageW = 55;
-  const imageL = 80;
- if(resourceGiven == "sheep")
- {
-  image(sheepCard,RGX,RGY,imageW,imageL);
-  totalSheepCollected++;
-  resourceQuantity("sheep",RGX,RGY);
- }
- else if (resourceGiven == "wheat")
- {
-  image(grainCard,RGX+imageW,RGY,imageW,imageL);
-  totalGrainCollected++;
-  resourceQuantity("wheat",RGX+imageW,RGY);
- }
- else if (resourceGiven == "brick")
- {
-  image(brickCard,RGX+2*imageW,RGY,imageW,imageL);
-  totalBrickCollected++;
-  resourceQuantity("brick",RGX+2*imageW,RGY);
- }
- else if (resourceGiven =="ore")
- {
-  image(oreCard,RGX+3*imageW,RGY,imageW,imageL);
-  totalOreCollected++;
-  resourceQuantity("ore",RGX+3*imageW,RGY);
- }
- else if (resourceGiven =="lumber")
- {
-  image(woodCard,RGX+4*imageW,RGY,imageW,imageL);
-  totalWoodCollected++;
-  resourceQuantity("lumber",RGX+4*imageW,RGY);
- }
-
-}
-function resourceQuantity(resourceName,RGX,RGY){
-  const imageW = 55;
-  const imageL = 80;
-  
-  if(resourceName == "wheat"){
-
-  textSize(20);
-  fill(0);
-  noStroke();
-  image(grainCard,RGX,RGY,imageW,imageL);
-  text(totalGrainCollected,RGX,RGY+13);
-
-  }
-  if(resourceName == "brick"){  
-    textSize(20);
-    fill(0);
-    noStroke();
-    image(brickCard,RGX,RGY,imageW,imageL);
-    text(totalBrickCollected,RGX,RGY+13);
-    }
- if(resourceName == "ore"){  
-textSize(20);
-fill(0);
-noStroke();
-image(oreCard,RGX,RGY,imageW,imageL);
-text(totalOreCollected,RGX,RGY+13);
-}
-if(resourceName == "lumber"){  
-  
-
-textSize(20);
-fill(0);
-noStroke();
-image(woodCard,RGX,RGY,imageW,imageL);
-text(totalWoodCollected,RGX,RGY+13);
- }
- if(resourceName == "sheep"){  
-textSize(20);
-fill(0);
-noStroke();
-image(sheepCard,RGX,RGY,imageW,imageL);
-text(totalSheepCollected,RGX,RGY+13);
- }
-
 }
 function dicePressed(){
   if(mouseIsPressed && mouseX >= 600 && mouseY >= 530 && mouseX <=700 && mouseY <= 580)
@@ -516,33 +511,92 @@ function dicePressed(){
    console.log("can_Build_Settelment_boo",can_Build_Settelment_boo);
   }
 }
+function resourceTaken(resourceGiven,currentPlayer){
 
 
 
+  const RGX = 20;
+  const RGY = 690;
+  const imageW = 55;
+  const imageL = 80;
+ if(resourceGiven == "sheep")
+ {
+  image(sheepCard,RGX,RGY,imageW,imageL);
+  currentPlayer.resources.sheep++;
+  resourceQuantity("sheep",RGX,RGY);
+ }
+ else if (resourceGiven == "wheat")
+ {
+  image(grainCard,RGX+imageW,RGY,imageW,imageL);
+  currentPlayer.resources.grain++;
+  resourceQuantity("wheat",RGX+imageW,RGY);
+ }
+ else if (resourceGiven == "brick")
+ {
+  image(brickCard,RGX+2*imageW,RGY,imageW,imageL);
+  currentPlayer.resources.brick++;
+  resourceQuantity("brick",RGX+2*imageW,RGY);
+ }
+ else if (resourceGiven =="ore")
+ {
+  image(oreCard,RGX+3*imageW,RGY,imageW,imageL);
+  currentPlayer.resources.ore++;
+  resourceQuantity("ore",RGX+3*imageW,RGY);
+ }
+ else if (resourceGiven =="lumber")
+ {
+  image(woodCard,RGX+4*imageW,RGY,imageW,imageL);
+  currentPlayer.resources.wood++;
+  resourceQuantity("lumber",RGX+4*imageW,RGY);
+ }
 
+}
+function resourceQuantity(resourceName,RGX,RGY){
+
+  let currentPlayer = players[currentPlayerIndex];
+
+  const imageW = 55;
+  const imageL = 80;
+  
+  textSize(20);
+  fill(0);
+  noStroke();
+
+  if(resourceName == "wheat"){
+
+  image(grainCard,RGX,RGY,imageW,imageL);
+  text(currentPlayer.resources.grain,RGX,RGY+13);
+
+  }
+  if(resourceName == "brick"){  
+   
+    image(brickCard,RGX,RGY,imageW,imageL);
+    text(currentPlayer.resources.brick,RGX,RGY+13);
+    }
+ if(resourceName == "ore"){  
+
+   image(oreCard,RGX,RGY,imageW,imageL);
+   text(currentPlayer.resources.ore,RGX,RGY+13);
+    }
+
+  if(resourceName == "lumber"){  
+  
+  image(woodCard,RGX,RGY,imageW,imageL);
+  text(currentPlayer.resources.wood,RGX,RGY+13);
+   }
+
+ if(resourceName == "sheep"){  
+
+image(sheepCard,RGX,RGY,imageW,imageL);
+text(currentPlayer.resources.sheep,RGX,RGY+13);
+ }
+
+}
 //drawing 
-function drawSettelement(Sx,Sy,color)
+function drawSettelement(Sx,Sy,playerColor)
 {
-  if(color == "Red")
-  {
-    fill(255,0,0)
-  }
-  else if(color == "Blue")
-  {
-    fill(0,0,255)
-  }
-  else if(color == "Green")
-  {
-    fill(0,200,100)
-  }
-  else if(color == "Black")
-  {
-    fill(0,0,0)
-  }
-  //fill(255,0,0)
+  fill(playerColor);
   stroke(255);
-
-  stroke('lime');
   strokeWeight(3);
   
   // Main house structure
@@ -588,31 +642,16 @@ function getClosestHexEdge(x, y, size) {
   }
   return closest;
 }
-function drawCity(Sx,Sy,color)
+function drawCity(Sx,Sy,playerColor)
 {
-  if(color == "Red")
-  {
-    fill(255,0,0)
-  }
-  else if(color == "Blue")
-  {
-    fill(0,0,255)
-  }
-  else if(color == "Green")
-  {
-    fill(0,200,100)
-  }
-  else if(color == "Black")
-  {
-    fill(0,0,0)
-  }
-  //fill(255,0,0)
+ 
+  fill(playerColor)
   stroke(255);
-
-  stroke('lime');
+push()
+  stroke('orange');
   strokeWeight(3);
   
-
+pop()
   const toleft = -15;
   // Main house structure
   beginShape();
@@ -675,21 +714,13 @@ function drawCity(Sx,Sy,color)
 
   rect(Sx-5,Sy-38,10,20)
 }
-function drawRoad(Sx, Sy, color) {
+function drawRoad(Sx, Sy, playerColor) {
   const hexSize = 75; 
   const closestHexCenter = getClosestHexCenter(Sx, Sy);
   const sideAngle = getClosestHexSide(Sx, Sy, closestHexCenter.x, closestHexCenter.y, hexSize);
   
-  if(color == "Red") {
-    fill(255,0,0);
-  } else if(color == "Blue") {
-    fill(0,0,255);
-  } else if(color == "Green") {
-    fill(0,200,100);
-  } else if(color == "Black") {
-    fill(0,0,0);
-  }
-  
+
+ fill(playerColor);
   push();
   stroke(255);
   translate(closestHexCenter.x, closestHexCenter.y);
@@ -705,7 +736,7 @@ function drawRoad(Sx, Sy, color) {
       x: closestHexCenter.x + hexSize * cos(radians(sideAngle)), 
       y: closestHexCenter.y + hexSize * sin(radians(sideAngle)) 
     },
-    color: color
+    color: playerColor
   };
   
   roads.push(road);
@@ -741,10 +772,6 @@ function getClosestHexSide(x, y, hexX, hexY, hexSize) {
 
   return closestAngle;
 }
-
-
-
-
 function highLightHexagon(x, y, size,opacity) {
   fill(255, 255, 0, opacity);
   stroke(255, 255, 0);
@@ -757,8 +784,7 @@ function highLightHexagon(x, y, size,opacity) {
   vertex(xOffset, yOffset);
   }
   endShape(CLOSE);
-  } 
-
+} 
 function unhighLightHexagon(x, y, size,opacity) {
   fill(255, 0, 0, opacity);
   stroke(0, 0, 0);
@@ -771,8 +797,7 @@ function unhighLightHexagon(x, y, size,opacity) {
   vertex(xOffset, yOffset);
   }
   endShape(CLOSE);
-  } 
-
+} 
 function endInitialPlacement() {
   if(settlements.length < 2){
      return initialPlacement = true;
@@ -780,17 +805,17 @@ function endInitialPlacement() {
     return initialPlacement = false;
    }
 }
-
-
 function isLegalSettlementPlacement(x, y) {
 
-  for (let settlement of settlements) {
+  for (let player of players) {
+  for (let settlement of player.structures.settlements) {
     const distance = dist(x, y, settlement.x, settlement.y);
     if (distance < 85) { // Using hexSize as minimum distance
       console.log("Too close to another settlement",dist(x, y, settlement.x, settlement.y));
       return false;
     }
   }
+}
 
   // During initial placement, no need to check for road connection
   if (initialPlacement) {
@@ -798,7 +823,7 @@ function isLegalSettlementPlacement(x, y) {
   }
 
   // Check if connected to a road (except during initial placement)
-  let hasConnectedRoad = false;
+  /*let hasConnectedRoad = false;
   for (let road of roads) {
     const distToRoadStart = dist(x, y, road.start.x, road.start.y);
     const distToRoadEnd = dist(x, y, road.end.x, road.end.y);
@@ -817,28 +842,36 @@ function isLegalSettlementPlacement(x, y) {
   }
 
   return true;
-}
-function is_Legal_Road_Placment(x,y){
-  let hasConnectedRoad = false;
-  if(roads.length < 3){
-    hasConnectedRoad = true;
+}*/
+let currentPlayer = players[currentPlayerIndex];
+for (let road of currentPlayer.structures.roads) {
+  const distToRoadStart = dist(x, y, road.start.x, road.start.y);
+  const distToRoadEnd = dist(x, y, road.end.x, road.end.y);
+  if (distToRoadStart < 45 || distToRoadEnd < 45) {
+    return true;
   }
-  else{
-  for(let road of roads){
+}
+
+console.log("Must be connected to your own road");
+return false;
+}
+function isLegalRoadPlacement(x,y,player){
+
+  if(player.structures.roads.length < 3){
+    return true;
+  }
+  
+  for(let road of player.structures.roads){
     const distToRoadStart = dist(x,y,road.start.x,road.start.y);
     const distToRoadEnd = dist(x,y,road.end.x,road.end.y);
     console.log("distance calculating");
     if(distToRoadStart < 95 || distToRoadEnd < 95){
       console.log("distance calculated");
-      hasConnectedRoad = true;
-      break;
-    }
+      return true;
   }
-
 }
-  return hasConnectedRoad;
+  return false;
 }
-
 function calculateHexagonEdges(centerX, centerY, size) {
   const edges = [];
   for (let i = 0; i < 6; i++) {
@@ -849,7 +882,6 @@ function calculateHexagonEdges(centerX, centerY, size) {
   }
   return edges;
 }
-
 function generateAllHexagonEdges() {
   const allEdges = [];
   const hexSize = 75; // Adjust this based on your hexagon size
@@ -887,72 +919,151 @@ function generateAllHexagonEdges() {
 
   return allEdges;
 }
-
-
-
 //Check if we have enough resourcess
-function can_Build_Settelment(){
+function can_Build_Settelment(player){
 
-  console.log("Resources",totalSheepCollected,totalGrainCollected,totalBrickCollected,
-  totalWoodCollected);
-  if(totalGrainCollected > 0 &&
-    totalBrickCollected > 0&&
-    totalWoodCollected > 0  &&
-    totalSheepCollected > 0 ){
-     return  can_Build_Settelment_boo = true;
+  console.log("Resources",player.resources.sheep,player.resources.grain
+  , player.resources.brick, player.resources.wood);
+  if(player.resources.grain > 0 &&
+    player.resources.brick > 0&&
+    player.resources.wood > 0  &&
+    player.resources.sheep > 0 ){
+      console.log("true");
+     return   true;
     }
     else {
-      return can_Build_Settelment_boo = false;
+      console.log("false");
+      return false;
     }
 }
+function can_Build_Road(player){
 
-function can_Build_Road(){
-
-  if(totalBrickCollected > 0 &&
-      totalWoodCollected > 0 ){
-     return  can_Build_Road_boo = true;
+  if(player.resources.brick > 0 &&
+      player.resources.wood > 0 ){
+     return  true;
     }
     else {
-      return can_Build_Road_boo = false;
+      return false;
     }
 }
-
-function countAdjecent_Settelment(hexX,hexY){
+function countAdjecent_Settelment(hexX,hexY,player){
   let count = 0;
 
-  for(let settelment of settlements){
+  for(let settelment of player.structures.settlements){
     if(dist(hexX,hexY,settelment.x,settelment.y)<80){
       count++;
     }
   }
   return count;
 }
-
+function countAdjecent_City(hexX,hexY,player){
+  let count = 0;
+  for(let city of player.structures.cities){
+    if(dist(hexX,hexY,city.x,city.y)<80){
+      count++;
+    }
+  }
+  return count;
+}
 function updateAllResourceQuantities() {
   const RGX = 20;
   const RGY = 690;
   const imageW = 55;
   const imageL = 80;
-  resourceQuantity("wheat", RGX + imageW, RGY);
-  resourceQuantity("brick", RGX + 2 * imageW, RGY);
-  resourceQuantity("ore", RGX + 3 * imageW, RGY);
-  resourceQuantity("lumber", RGX + 4 * imageW, RGY);
-  resourceQuantity("sheep", RGX, RGY);
+  for (let player of players) {
+  resourceQuantity("wheat", RGX + imageW, RGY,player);
+  resourceQuantity("brick", RGX + 2 * imageW, RGY,player);
+  resourceQuantity("ore", RGX + 3 * imageW, RGY,player);
+  resourceQuantity("lumber", RGX + 4 * imageW, RGY,player);
+  resourceQuantity("sheep", RGX, RGY,player);
 }
-
+}
 function displayPoints(){
 
   push();
   fill(255, 140, 0); 
-  rect(525,2,155,40,10)
+  rect(525,2,165,65,10)
   pop();
   fill('white');
   textFont("Impact");
   textSize(22);
-  text("Total Points: " + totalPoints, 530, 30);
-
-  if(roads.length > 7 ){
-    totalPoints++
-    totalPoints++
+  for (let i = 0; i < players.length; i++) {
+    text(`Player ${i + 1} Points: ${players[i].victoryPoints}`, 530, 30 + i * 30);
   }
+}
+function roadPoints(){
+  if(roads.length > 7 ){
+    totalPoints+= 2;
+  }
+}
+function settelment_to_City(player){
+ // for(let settelment of settlements){
+  //  console.log("going to build city")
+    //if(dist(x, y, settelment.x, settelment.y) < 15){
+      if(player.resources.grain >= 2 && player.resources.ore >= 3){
+       // drawCity(x,y,"Green")
+       // totalPoints++;
+       // totalGrainCollected = totalGrainCollected -2;
+      //  totalOreCollected = totalOreCollected- 3;
+       // resourcesChanged = true;
+       // settlements.push({ x: x, y: y });
+       //break;
+       return true;
+      }
+      else {
+        return false;
+      }
+
+ // }
+//  }
+}
+function nextTurn() {
+
+  currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+  
+  updatePlayerTurnDisplay(currentPlayerIndex);
+  
+}
+function updatePlayerTurnDisplay(x) {
+  if (x == 0) {
+    return color(255, 0, 0); // Red for player 0
+  } else if (x == 1) {
+    return color(0, 255, 0); // Green for player 1
+  }
+}
+function createConfetti() {
+  for (let i = 0; i < 100; i++) {
+    confetti.push({
+      x: random(width),
+      y: random(-100, -10),
+      size: random(5, 15),
+      color: color(random(255), random(255), random(255)),
+      speed: random(1, 5)
+    });
+  }
+}
+function drawConfetti() {
+  for (let i = confetti.length - 1; i >= 0; i--) {
+    let c = confetti[i];
+    fill(c.color);
+    noStroke();
+    rect(c.x, c.y, c.size, c.size);
+    c.y += c.speed;
+    
+    if (c.y > height) {
+      confetti.splice(i, 1);
+    }
+  }
+  
+  if (confetti.length < 50) {
+    createConfetti();
+  }
+}
+function turnButton(){
+
+  if(mouseIsPressed && mouseX >= 690 && mouseY >= 690 && mouseX <=760 && mouseY <= 760)
+  {nextTurn();
+    updateAllResourceQuantities();
+    console.log("Current player: ", currentPlayerIndex);}
+  
 }
