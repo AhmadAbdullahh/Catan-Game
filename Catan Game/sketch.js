@@ -142,7 +142,7 @@ function setup() {
 }
 function draw()
 {
-    fill(255);
+    fill(255,0,0);
     rect(10,2,40,30,2)
     textSize(20);
     fill(0);
